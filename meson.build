@@ -9,8 +9,7 @@ project('cchell', 'cpp',
 
 cchell_include    = include_directories('include')
 cchell_build_args = [ '-DPROJECT_NAME="@0@"'   .format(meson.project_name()),
-                      '-DPROJECT_VERSION="@0@"'.format(meson.project_version()),
-                      '-D_GNU_SOURCE' ]
+                      '-DPROJECT_VERSION="@0@"'.format(meson.project_version()) ]
 
 cchell_deps = [ dependency('lyra', fallback: ['Lyra', 'lyra_dep']) ]
 

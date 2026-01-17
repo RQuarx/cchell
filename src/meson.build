@@ -1,1 +1,1 @@
-cchell_source = files('main.cc')
+cchell_source = files('diagnostic.cc', 'lexer.cc', 'main.cc')
