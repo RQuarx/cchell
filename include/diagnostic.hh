@@ -12,40 +12,45 @@ namespace cchell
     {
         inline struct diagnostic_config
         {
-            std::array<color, 3> tag_color;
+            std::array<color, 3> tag_color {
+                color { 220, 50,  47  }
+                 .add_attribute(ansi::attribute::bold),
+                color { 181, 137, 0   }
+                 .add_attribute(ansi::attribute::bold),
+                color { 38,  139, 210 }
+                 .add_attribute(ansi::attribute::bold),
+            };
 
-            color line_color;
-            color alt_line_color;
+            color line_color { 30, 31, 44 };
+            color alt_line_color {
+                color { 21, 22, 30 }
+                 .add_attribute(ansi::attribute::dim)
+            };
 
-            color line_number_color;
-            color separator_color;
-            color underline_color;
+            color line_number_color {
+                color { 193, 195, 211 }
+                 .add_attribute(ansi::attribute::dim)
+            };
+            color separator_color { 100, 105, 140 };
+            color underline_color {
+                color { 220, 50, 47 }
+                 .add_attribute(ansi::attribute::bold)
+            };
 
-            color error_code_color;
-            color code_color;
-            color domain_color;
-            color source_color;
-        } diagnostic {
-            .tag_color = {
-                color { 220, 50,  47  }.add_attribute(ansi::attribute::bold),
-                color { 181, 137, 0   }.add_attribute(ansi::attribute::bold),
-                color { 38,  139, 210 }.add_attribute(ansi::attribute::bold),
-            },
-
-            .line_color     = color { 30, 31, 44 },
-            .alt_line_color = color { 21, 22, 30 }.add_attribute(ansi::attribute::dim),
-
-            .line_number_color = color { 193, 195, 211 }.add_attribute(ansi::attribute::dim),
-            .separator_color   = color { 100, 105, 140 },
-
-            .underline_color = color { 220, 50, 47 }.add_attribute(ansi::attribute::bold),
-
-            .error_code_color = color { 220, 50, 47 }.add_attribute(ansi::attribute::bold),
-
-            .code_color   = color { 255, 255, 255 },
-            .domain_color = color { 116, 107, 215 }.add_attribute(ansi::attribute::bold),
-            .source_color = color { 150, 150, 150 }.add_attribute(ansi::attribute::dim),
-        };
+            color error_code_color {
+                color { 220, 50, 47 }
+                 .add_attribute(ansi::attribute::bold)
+            };
+            color code_color { 255, 255, 255 };
+            color domain_color {
+                color { 116, 107, 215 }
+                 .add_attribute(ansi::attribute::bold)
+            };
+            color source_color {
+                color { 150, 150, 150 }
+                 .add_attribute(ansi::attribute::dim)
+            };
+        } diagnostic;
     }
 
 

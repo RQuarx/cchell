@@ -1,6 +1,4 @@
 #pragma once
-#include <cstddef>
-#include <cstdint>
 #include <format>
 #include <iomanip>
 #include <optional>
@@ -27,8 +25,8 @@ namespace cchell::lexer
     class token
     {
     public:
-        token(token_type type, std::string_view data, source_location location)
-            : m_type { type }, m_data { data }, m_location { location }
+        token(token_type type, std::string_view data, source_location source)
+            : m_type { type }, m_data { data }, m_source { source }
         {
         }
 
@@ -51,16 +49,16 @@ namespace cchell::lexer
 
         [[nodiscard]]
         auto
-        location() const -> source_location
+        source() const -> source_location
         {
-            return m_location;
+            return m_source;
         }
 
     private:
         token_type       m_type;
         std::string_view m_data;
 
-        source_location m_location;
+        source_location m_source;
     };
 
 
@@ -129,11 +127,11 @@ namespace std
 
             return format_to(ctx.out(),
                              R"({{
-  "location": [ {} ],
-  "data":     {},
-  "type":     {}
+  "source": [ {} ],
+  "data":   {},
+  "type":   {}
 }})",
-                             token.location(), data, token.type());
+                             token.source(), data, token.type());
         }
     };
 }

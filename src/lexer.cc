@@ -65,7 +65,7 @@ namespace
     get_tokens_from_word(std::string_view                   word,
                          std::size_t                        index,
                          std::size_t                        line_start_index,
-                         cchell::source_location            location,
+                         cchell::source_location            source,
                          std::vector<cchell::lexer::token> &out)
     {
         using namespace cchell::lexer;
@@ -78,22 +78,22 @@ namespace
 
             if (i > start)
             {
-                location(location.line(), (index + start) - line_start_index);
+                source(source.line(), (index + start) - line_start_index);
                 out.emplace_back(token_type::word,
-                                 word.substr(start, i - start), location);
+                                 word.substr(start, i - start), source);
             }
 
-            location(location.line(), index + i);
+            source(source.line(), index + i);
             out.emplace_back(get_punct_token_type(word[i]), word.substr(i, 1),
-                             location);
+                             source);
 
             start = i + 1;
         }
 
         if (start < word.length())
         {
-            location(location.line(), (index + start) - line_start_index);
-            out.emplace_back(token_type::word, word.substr(start), location);
+            source(source.line(), (index + start) - line_start_index);
+            out.emplace_back(token_type::word, word.substr(start), source);
         }
     }
 
@@ -108,7 +108,7 @@ cchell::lexer::lex(std::string_view string) -> std::vector<token>
 
     std::size_t     index { 0 };
     std::size_t     line_start_index { 0 };
-    source_location location { 0, 0 };
+    source_location source { 0, 0 };
 
     while (index < string.length())
     {
@@ -116,7 +116,7 @@ cchell::lexer::lex(std::string_view string) -> std::vector<token>
 
         if (c == '\n')
         {
-            location(location.line() + 1, 0);
+            source(source.line() + 1, 0);
             line_start_index = ++index;
             continue;
         }
@@ -124,7 +124,7 @@ cchell::lexer::lex(std::string_view string) -> std::vector<token>
         if (std::isspace(c) != 0)
         {
             index++;
-            location(location.line(), index - line_start_index);
+            source(source.line(), index - line_start_index);
             continue;
         }
 
@@ -136,10 +136,10 @@ cchell::lexer::lex(std::string_view string) -> std::vector<token>
         std::string_view word { string.data() + index,
                                 next_whitespace - index };
 
-        get_tokens_from_word(word, index, line_start_index, location, tokens);
+        get_tokens_from_word(word, index, line_start_index, source, tokens);
 
         index = next_whitespace;
-        location(location.line(), index - line_start_index);
+        source(source.line(), index - line_start_index);
     }
 
     return tokens;
@@ -150,10 +150,11 @@ auto
 cchell::lexer::verify(const std::vector<token> &tokens)
     -> std::optional<diagnostic>
 {
-    std::unordered_map<char, std::stack<source_location>> paren;
-    paren['('];
-    paren['{'];
-    paren['['];
+    std::unordered_map<char, std::stack<source_location>> paren {
+        { '(', {} },
+        { '{', {} },
+        { '[', {} }
+    };
 
     std::optional<char> active_quote;
     source_location     quote_location {};
@@ -165,7 +166,7 @@ cchell::lexer::verify(const std::vector<token> &tokens)
             char c { token.data()[0] };
 
             if (c == '(' || c == '{' || c == '[')
-                paren[c].push(token.location());
+                paren[c].push(token.source());
             else
             {
                 char open { matching_open(c) };
@@ -176,7 +177,7 @@ cchell::lexer::verify(const std::vector<token> &tokens)
                         .set_message("extra closing bracket '{}' found.", c)
                         .set_annotation("try removing the '{}'.", c)
                         .set_level(message_level::error)
-                        .set_source(token.location())
+                        .set_source(token.source())
                         .set_length(1);
 
                 paren[open].pop();
@@ -191,7 +192,7 @@ cchell::lexer::verify(const std::vector<token> &tokens)
             if (!active_quote)
             {
                 active_quote = q;
-                quote_location = token.location();
+                quote_location = token.source();
             }
             else if (*active_quote == q)
                 active_quote.reset();

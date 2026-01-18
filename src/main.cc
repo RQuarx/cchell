@@ -1,12 +1,15 @@
 #include <format>
+#include <memory>
 #include <print>
 #include <string>
 #include <utility>
 
 #include <lyra/lyra.hpp>
 
+#include "ask.hh"
 #include "diagnostic.hh"
 #include "lexer.hh"
+#include "parser.hh"
 
 
 namespace
@@ -86,15 +89,25 @@ main(int argc, char **argv) -> int
     if (show_help) print_help(*argv);
     if (show_version) print_version();
 
-    // std::println("{}", commands.empty() ? "empty" : commands);
+    std::println("{}", commands.empty() ? "empty" : commands);
+    if (commands.empty()) return 0;
 
-    // auto tokens { cchell::lexer::lex(commands) };
-    // for (const auto &tkn : tokens) { std::println("{}", tkn); }
+    auto tokens { cchell::lexer::lex(commands) };
+    std::println("{}", tokens);
 
-    // std::println("{}", cchell::lexer::verify(tokens)
-    //                        ->set_file("stdin")
-    //                        .set_raw(commands)
-    //                        .format());
+    std::unique_ptr<cchell::parser::ast_node> ast;
+
+    try
+    {
+        ast = cchell::parser::parse(tokens);
+    }
+    catch (cchell::diagnostic &diag)
+    {
+        std::print("{}", diag.set_raw(commands).format());
+        return 1;
+    }
+
+    std::println("{}", *ast);
 
     return 0;
 }
