@@ -108,6 +108,10 @@ main(int argc, char **argv) -> int
     }
 
     std::println("{}", *ast);
+    if (auto diag {cchell::parser::verify(*ast) })
+        std::print("{}", diag->set_raw(commands).format());
+    else
+        std::println("{}", *ast);
 
     return 0;
 }

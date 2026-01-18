@@ -32,3 +32,19 @@ cchell::parser::parse(const std::vector<lexer::token> &tokens)
 
     return root;
 }
+
+
+auto
+cchell::parser::verify(ast_node &nodes) -> std::optional<diagnostic>
+{
+    for (auto &node : nodes.child)
+    {
+        if (!node.child.empty())
+            if (auto diag { verify(node) }) return diag;
+
+        if (node.type == ast_type::command)
+            if (auto diag {impl::verify_command(node) }) return diag;
+    }
+
+    return std::nullopt;
+}

@@ -85,6 +85,8 @@ namespace cchell::parser
     [[nodiscard]]
     auto parse(const std::vector<lexer::token> &tokens)
         -> std::unique_ptr<ast_node>;
+
+    auto verify(ast_node &nodes) -> std::optional<diagnostic>;
 }
 
 

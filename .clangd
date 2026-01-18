@@ -22,6 +22,7 @@ Diagnostics:
             - bugprone-easily-swappable-parameters
             - readability-avoid-nested-conditional-operator
             - bugprone-narrowing-conversions
+            - modernize-use-trailing-return-type
 
 Index:
     Background: Build
