@@ -8,7 +8,6 @@
 #include "diagnostic.hh"
 #include "lexer.hh"
 
-
 namespace cchell::lexer { class token; }
 
 
