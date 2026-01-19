@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <filesystem>
 #include <optional>
 #include <ranges>
@@ -66,7 +65,7 @@ namespace
         for (const auto &candidate : paths)
         {
             fs::path    filename { candidate.filename() };
-            std::size_t dist { cchell::shared::impl::damerau_levenshtein_osa(
+            std::size_t dist { cchell::shared::damerau_levenshtein_osa(
                 candidate.filename().string(), target.filename().string()) };
 
             if (dist < smallest)

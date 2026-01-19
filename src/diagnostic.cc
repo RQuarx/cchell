@@ -165,7 +165,7 @@ namespace
 
 
 auto
-diagnostic::format_message() -> std::string
+diagnostic::message_to_string() -> std::string
 {
     if (domain.empty())
         return std::format(
@@ -181,10 +181,10 @@ diagnostic::format_message() -> std::string
 
 
 auto
-diagnostic::format() -> std::string
+diagnostic::to_string() -> std::string
 {
     /* 1. format header */
-    std::string formatted { format_message() + '\n' };
+    std::string formatted { message_to_string() + '\n' };
 
     auto lines { split_lines(raw) };
 

@@ -2,19 +2,19 @@
 #include <memory>
 #include <print>
 #include <string>
-#include <utility>
+#include <string_view>
 
 #include <lyra/lyra.hpp>
 
-#include "ask.hh"
 #include "diagnostic.hh"
+#include "evaluator.hh"
 #include "lexer.hh"
 #include "parser.hh"
+#include "shared.hh"
 
 
 namespace
 {
-    [[noreturn]]
     void
     print_help(std::string_view binary_name)
     {
@@ -28,21 +28,16 @@ namespace
 , binary_name
         );
         /* clang-format on */
-
-        std::exit(0);
     }
 
 
-    [[noreturn]]
     void
     print_version()
     {
         std::println("{} {}", PROJECT_NAME, PROJECT_VERSION);
-        std::exit(0);
     }
 
 
-    [[nodiscard]]
     auto
     get_commands(int &argc, char **argv) -> std::string
     {
@@ -66,13 +61,31 @@ namespace
 
         return commands;
     }
+
+
+    void
+    fill_global_env(char **envp)
+    {
+        for (char **p { envp }; *p != nullptr; p++)
+        {
+            std::string_view env { *p };
+
+            if (auto idx { env.find('=') }; idx != std::string_view::npos)
+                cchell::shared::envp.emplace(env.substr(0, idx),
+                                             env.substr(idx + 1));
+        }
+    }
 }
 
 
 auto
-main(int argc, char **argv) -> int
+main(int argc, char **argv, char **envp) -> int
 {
+    fill_global_env(envp);
     std::string commands { get_commands(argc, argv) };
+
+    for (auto &[key, value] : cchell::shared::envp)
+        std::println("{}: {}", key, value);
 
     bool show_help { false };
     bool show_version { false };
@@ -86,8 +99,8 @@ main(int argc, char **argv) -> int
     if (auto res { cli.parse({ argc, argv }) }; !res)
         return std::println("{}", res.message()), 1;
 
-    if (show_help) print_help(*argv);
-    if (show_version) print_version();
+    if (show_help) return print_help(*argv), 0;
+    if (show_version) return print_version(), 0;
 
     std::println("{}", commands.empty() ? "empty" : commands);
     if (commands.empty()) return 0;
@@ -103,13 +116,13 @@ main(int argc, char **argv) -> int
     }
     catch (cchell::diagnostic &diag)
     {
-        std::print("{}", diag.set_raw(commands).format());
+        std::print("{}", diag.set_raw(commands).to_string());
         return 1;
     }
 
     std::println("{}", *ast);
-    if (auto diag {cchell::parser::verify(*ast) })
-        std::print("{}", diag->set_raw(commands).format());
+    if (auto diag { cchell::parser::verify(*ast) })
+        std::print("{}", diag->set_raw(commands).to_string());
     else
         std::println("{}", *ast);
 

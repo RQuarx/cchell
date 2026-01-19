@@ -24,7 +24,7 @@ namespace
 
 
 auto
-impl::damerau_levenshtein_osa(std::string_view a, std::string_view b)
+cchell::shared::damerau_levenshtein_osa(std::string_view a, std::string_view b)
     -> std::size_t
 {
     const std::size_t n { a.size() };

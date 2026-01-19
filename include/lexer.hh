@@ -12,12 +12,22 @@ namespace cchell::lexer
 {
     enum class token_type : std::uint8_t
     {
+        /* a generic "word" token (command, options, envars, etc) */
         word,
-        parenthesis,
+
+        /* a token that represents an open or
+           closing bracket ('{}', '()', '[]') */
+        bracket,
+
+        /* a token that represents a quote type (', ", `) */
         quote,
-        path,
+
+        /* a token that represents the pipe (|) operator */
         pipe,
+
+        /* a token that represents a dollar-sign ($) */
         dollar,
+
         none
     };
 
@@ -57,8 +67,7 @@ namespace cchell::lexer
     private:
         token_type       m_type;
         std::string_view m_data;
-
-        source_location m_source;
+        source_location  m_source;
     };
 
 
@@ -66,8 +75,18 @@ namespace cchell::lexer
     auto lex(std::string_view string) -> std::vector<token>;
 
 
-    [[nodiscard]]
-    auto verify(const std::vector<token> &tokens) -> std::optional<diagnostic>;
+    namespace impl
+    {
+        struct verifier : cchell::verifier<const std::vector<token> &>
+        {
+            [[nodiscard]]
+            auto operator()(const std::vector<token> &tokens) const
+                -> std::optional<diagnostic> override;
+        };
+    }
+
+
+    inline constexpr impl::verifier verify;
 }
 
 
@@ -93,15 +112,12 @@ namespace std
 
             switch (type)
             {
-            case token_type::word: name = "token_type::word"; break;
-            case token_type::parenthesis:
-                name = "token_type::parenthesis";
-                break;
-            case token_type::quote:  name = "token_type::quote"; break;
-            case token_type::path:   name = "token_type::path"; break;
-            case token_type::pipe:   name = "token_type::pipe"; break;
-            case token_type::dollar: name = "token_type::dollar"; break;
-            case token_type::none:   name = "token_type::none"; break;
+            case token_type::word:    name = "token_type::word"; break;
+            case token_type::bracket: name = "token_type::bracket"; break;
+            case token_type::quote:   name = "token_type::quote"; break;
+            case token_type::pipe:    name = "token_type::pipe"; break;
+            case token_type::dollar:  name = "token_type::dollar"; break;
+            case token_type::none:    name = "token_type::none"; break;
             }
 
             return format_to(ctx.out(), "{}", name);

@@ -50,7 +50,7 @@ namespace
         case '{': [[fallthrough]];
         case '}': [[fallthrough]];
         case '[': [[fallthrough]];
-        case ']': return token_type::parenthesis;
+        case ']': return token_type::bracket;
 
         case '|': return token_type::pipe;
 
@@ -147,10 +147,10 @@ cchell::lexer::lex(std::string_view string) -> std::vector<token>
 
 
 auto
-cchell::lexer::verify(const std::vector<token> &tokens)
-    -> std::optional<diagnostic>
+cchell::lexer::impl::verifier::operator()(
+    const std::vector<token> &tokens) const -> std::optional<diagnostic>
 {
-    std::unordered_map<char, std::stack<source_location>> paren {
+    std::unordered_map<char, std::stack<source_location>> bracket {
         { '(', {} },
         { '{', {} },
         { '[', {} }
@@ -161,17 +161,17 @@ cchell::lexer::verify(const std::vector<token> &tokens)
 
     for (const token &token : tokens)
     {
-        if (token.type() == token_type::parenthesis)
+        if (token.type() == token_type::bracket)
         {
             char c { token.data()[0] };
 
             if (c == '(' || c == '{' || c == '[')
-                paren[c].push(token.source());
+                bracket[c].push(token.source());
             else
             {
                 char open { matching_open(c) };
 
-                if (open == 0 || paren[open].empty())
+                if (open == 0 || bracket[open].empty())
                     return diagnostic {}
                         .set_domain("cchell::lexer")
                         .set_message("extra closing bracket '{}' found.", c)
@@ -180,7 +180,7 @@ cchell::lexer::verify(const std::vector<token> &tokens)
                         .set_source(token.source())
                         .set_length(1);
 
-                paren[open].pop();
+                bracket[open].pop();
             }
             continue;
         }
@@ -191,7 +191,7 @@ cchell::lexer::verify(const std::vector<token> &tokens)
 
             if (!active_quote)
             {
-                active_quote = q;
+                active_quote   = q;
                 quote_location = token.source();
             }
             else if (*active_quote == q)
@@ -199,7 +199,7 @@ cchell::lexer::verify(const std::vector<token> &tokens)
         }
     }
 
-    for (const auto &[open, stack] : paren)
+    for (const auto &[open, stack] : bracket)
         if (!stack.empty())
             return diagnostic {}
                 .set_domain("cchell::lexer")

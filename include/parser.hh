@@ -86,7 +86,18 @@ namespace cchell::parser
     auto parse(const std::vector<lexer::token> &tokens)
         -> std::unique_ptr<ast_node>;
 
-    auto verify(ast_node &nodes) -> std::optional<diagnostic>;
+
+    namespace impl
+    {
+        struct verifier : cchell::verifier<ast_node &>
+        {
+            [[nodiscard]]
+            auto operator()(ast_node &nodes) const
+                -> std::optional<diagnostic> override;
+        };
+    }
+
+    inline constexpr impl::verifier verify;
 }
 
 

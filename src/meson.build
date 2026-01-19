@@ -1,3 +1,8 @@
 subdir('parser')
 
-cchell_source = files('diagnostic.cc', 'lexer.cc', 'main.cc', 'parser.cc', 'shared.cc') + cchell_parser_source
+cchell_source = files('shared.cc',
+                      'diagnostic.cc',
+                      'lexer.cc',
+                      'main.cc',
+                      'parser.cc'
+                     ) + cchell_parser_source

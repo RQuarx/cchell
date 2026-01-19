@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 #include <format>
+#include <optional>
 #include <string>
 
 #include "color.hh"
@@ -97,9 +98,9 @@ namespace cchell
 
 
         auto
-        operator==(const source_location &other) -> bool
+        operator==(const source_location &other) const -> bool
         {
-            return other.m_column == other.m_line;
+            return m_column == other.m_column && m_line == other.m_line;
         }
 
     private:
@@ -129,8 +130,8 @@ namespace cchell
         message_level level;
 
 
-        [[nodiscard]] auto format() -> std::string;
-        [[nodiscard]] auto format_message() -> std::string;
+        [[nodiscard]] auto to_string() -> std::string;
+        [[nodiscard]] auto message_to_string() -> std::string;
 
 
         auto set_domain(std::string_view domain) -> diagnostic &;
@@ -159,6 +160,14 @@ namespace cchell
             annotation = std::format(fmt, std::forward<T_Args>(args)...);
             return *this;
         }
+    };
+
+
+    template <typename T> struct verifier
+    {
+        [[nodiscard]]
+        virtual auto operator()(T) const -> std::optional<diagnostic>
+            = 0;
     };
 }
 

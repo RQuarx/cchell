@@ -8,11 +8,6 @@ namespace cchell::shared
 {
     namespace impl
     {
-        [[nodiscard]]
-        auto damerau_levenshtein_osa(std::string_view a, std::string_view b)
-            -> std::size_t;
-
-
         class executables
         {
             struct string_hash
@@ -53,7 +48,8 @@ namespace cchell::shared
 
 
             [[nodiscard]]
-            auto closest(std::string_view name, std::size_t max_distance = 2) const
+            auto closest(std::string_view name,
+                         std::size_t      max_distance = 2) const
                 -> const std::pair<const std::string, std::filesystem::path> *;
 
         private:
@@ -66,5 +62,12 @@ namespace cchell::shared
     }
 
 
+    [[nodiscard]]
+    auto damerau_levenshtein_osa(std::string_view a, std::string_view b)
+        -> std::size_t;
+
+
     inline impl::executables executables;
+
+    inline std::unordered_map<std::string_view, std::string_view> envp;
 }
