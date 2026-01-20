@@ -7,8 +7,6 @@
 #include <lyra/lyra.hpp>
 
 #include "diagnostic.hh"
-#include "evaluator.hh"
-#include "lexer.hh"
 #include "parser.hh"
 #include "shared.hh"
 

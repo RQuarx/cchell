@@ -109,17 +109,19 @@ namespace cchell::diagnostics
         std::string m_rendered;
 
 
+        [[nodiscard]]
         auto format_line(std::size_t      line_num,
                          std::string_view line,
                          std::size_t      line_len,
                          const theme     &theme) const -> std::string;
 
+        [[nodiscard]]
+        auto create_colorless_source(std::string_view input_file) const
+            -> std::string;
+
 
         void render_header(const theme &theme);
 
-
-        auto create_colorless_source(std::string_view input_file) const
-            -> std::string;
         void render_source(std::string_view colorless_source,
                            const theme     &theme);
 
@@ -129,6 +131,12 @@ namespace cchell::diagnostics
                          const theme     &theme);
 
         void render_annotation(const theme &theme);
+
+
+        void render_colored(std::string_view raw_string,
+                            std::string_view input_file,
+                            const theme     &theme);
+        void render_colorless(std::string_view input_file);
     };
 
 

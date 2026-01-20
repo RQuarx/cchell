@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <array>
 #include <cstdlib>
 #include <filesystem>
 #include <limits>

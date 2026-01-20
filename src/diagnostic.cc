@@ -8,6 +8,7 @@
 
 #include "color.hh"
 #include "diagnostic.hh"
+#include "shared.hh"
 
 
 namespace
@@ -68,6 +69,18 @@ namespace
 
 
     auto
+    severity_to_string(severity sev) -> std::string_view
+    {
+        switch (sev)
+        {
+        case severity::error:   return "error";
+        case severity::warning: return "warning";
+        case severity::note:    return "note";
+        }
+    }
+
+
+    auto
     colorize(std::string_view text, cchell::color color, bool reset = true)
         -> std::string
     {
@@ -124,6 +137,18 @@ diagnostic::render(std::string_view raw_string,
     m_rendered.clear();
     m_padding = 0;
 
+    shared::tty_status.stderr() ? render_colored(raw_string, input_file, theme)
+                                : render_colorless(input_file);
+
+    return m_rendered;
+}
+
+
+void
+diagnostic::render_colored(std::string_view raw_string,
+                           std::string_view input_file,
+                           const theme     &theme)
+{
     const std::size_t error_line { source.line + 1 };
 
     const std::size_t first_line { error_line > theme.extra_shown_line
@@ -155,21 +180,30 @@ diagnostic::render(std::string_view raw_string,
         render_line(i, line, i == error_line, theme);
 
     render_annotation(theme);
-    return m_rendered;
+}
+
+
+void
+diagnostic::render_colorless(std::string_view input_file)
+{
+    std::string_view severity { severity_to_string(level) };
+
+    m_rendered = std::format(
+        /* clang-format off */
+R"({} in {} at {}:{}:{}
+  {}
+  {}
+)",
+        /* clang-format on */
+        severity, domain, input_file, source.line, source.column, message,
+        annotation);
 }
 
 
 void
 diagnostic::render_header(const theme &theme)
 {
-    std::string_view severity;
-
-    switch (level)
-    {
-    case severity::error:   severity = "error";
-    case severity::warning: severity = "warning";
-    case severity::note:    severity = "note";
-    }
+    std::string_view severity { severity_to_string(level) };
 
     if (domain.empty())
         m_rendered = std::format("{}{}{}: {}\n",
@@ -248,11 +282,10 @@ diagnostic::render_line(std::size_t      line_num,
         auto [left, rest] { split_at(line, source.column) };
         auto [error, tail] { split_at(rest, length) };
 
-        colored_line
-            = std::format("{}{}{}{}{}{}{}{}", theme.code_color, left,
-                          color::reset_attributes(), theme.error_code_color,
-                          error, color::reset_attributes(), theme.code_color,
-                          tail);
+        colored_line = std::format(
+            "{}{}{}{}{}{}{}{}", theme.code_color, left,
+            color::reset_attributes(), theme.error_code_color, error,
+            color::reset_attributes(), theme.code_color, tail);
     }
     else
         colored_line = colorize(line, theme.code_color, false);
