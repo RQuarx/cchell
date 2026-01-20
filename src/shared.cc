@@ -1,9 +1,11 @@
 #include <algorithm>
+#include <array>
 #include <cstdlib>
 #include <filesystem>
 #include <limits>
 #include <ranges>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 #include <unistd.h>
@@ -132,4 +134,42 @@ impl::executables::closest(std::string_view name,
     if (closest == nullptr || closest_distance > max_distance) return nullptr;
 
     return closest;
+}
+
+
+impl::tty_status::tty_status() : m_ttys { 0 }
+{
+    if (isatty(STDIN_FILENO) == 1) m_ttys |= std::to_underlying(bits::stdin);
+    if (isatty(STDOUT_FILENO) == 1) m_ttys |= std::to_underlying(bits::stdout);
+    if (isatty(STDERR_FILENO) == 1) m_ttys |= std::to_underlying(bits::stderr);
+}
+
+
+auto
+impl::tty_status::stdin() const -> bool
+{
+    return (m_ttys & std::to_underlying(bits::stdin)) != 0;
+}
+
+
+auto
+impl::tty_status::stdout() const -> bool
+{
+    return (m_ttys & std::to_underlying(bits::stdout)) != 0;
+}
+
+
+auto
+impl::tty_status::stderr() const -> bool
+{
+    return (m_ttys & std::to_underlying(bits::stderr)) != 0;
+}
+
+auto
+impl::tty_status::operator[](unsigned int fd) const -> bool
+{
+    if (fd == 0) return stdin();
+    if (fd == 1) return stdout();
+    if (fd == 2) return stderr();
+    return isatty(fd) == 1;
 }

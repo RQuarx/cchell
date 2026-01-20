@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <filesystem>
 #include <string>
 #include <unordered_map>
@@ -59,6 +60,31 @@ namespace cchell::shared
                                string_equal>
                 m_paths;
         };
+
+
+        class tty_status
+        {
+        public:
+            enum class bits : std::uint8_t
+            {
+                none   = 0,
+                stdin  = 1 << 0,
+                stdout = 1 << 1,
+                stderr = 1 << 2,
+            };
+
+            tty_status();
+
+            auto stdin() const -> bool;
+            auto stdout() const -> bool;
+            auto stderr() const -> bool;
+
+
+            auto operator[](unsigned int fd) const -> bool;
+
+        private:
+            std::uint8_t m_ttys;
+        };
     }
 
 
@@ -67,7 +93,7 @@ namespace cchell::shared
         -> std::size_t;
 
 
-    inline impl::executables executables;
-
+    inline impl::tty_status                                       tty_status;
+    inline impl::executables                                      executables;
     inline std::unordered_map<std::string_view, std::string_view> envp;
 }

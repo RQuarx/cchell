@@ -93,6 +93,8 @@ main(int argc, char **argv, char **envp) -> int
              | lyra::help { show_help } };
     /* clang-format on */
 
+    std::println("{}", cchell::shared::tty_status.stdin());
+
     if (auto res { cli.parse({ argc, argv }) }; !res)
         return std::println("{}", res.message()), 1;
 
