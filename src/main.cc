@@ -84,9 +84,6 @@ main(int argc, char **argv, char **envp) -> int
     fill_global_env(envp);
     std::string commands { get_commands(argc, argv) };
 
-    for (auto &[key, value] : cchell::shared::envp)
-        std::println("{}: {}", key, value);
-
     bool show_help { false };
     bool show_version { false };
 
@@ -114,15 +111,15 @@ main(int argc, char **argv, char **envp) -> int
     {
         ast = cchell::parser::parse(tokens);
     }
-    catch (cchell::diagnostic &diag)
+    catch (cchell::diagnostics::diagnostic &diag)
     {
-        std::print("{}", diag.set_raw(commands).to_string());
+        std::print("{}", diag.render(commands, "argv"));
         return 1;
     }
 
     std::println("{}", *ast);
     if (auto diag { cchell::parser::verify(*ast) })
-        std::print("{}", diag->set_raw(commands).to_string());
+        std::print("{}", diag->render(commands, "argv"));
     else
         std::println("{}", *ast);
 

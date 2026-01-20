@@ -77,7 +77,9 @@ namespace cchell::lexer
 
     namespace impl
     {
-        struct verifier : cchell::verifier<const std::vector<token> &>
+        using namespace diagnostics;
+
+        struct verifier : diagnostics::verifier<const std::vector<token> &>
         {
             [[nodiscard]]
             auto operator()(const std::vector<token> &tokens) const

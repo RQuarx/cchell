@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <cstddef>
 #include <format>
 #include <optional>
 #include <string>
@@ -9,107 +10,74 @@
 
 namespace cchell
 {
-    namespace config
+    struct source_location
     {
-        inline struct diagnostic_config
-        {
-            std::array<color, 3> tag_color {
-                color { 220, 50,  47  }
-                 .add_attribute(ansi::attribute::bold),
-                color { 181, 137, 0   }
-                 .add_attribute(ansi::attribute::bold),
-                color { 38,  139, 210 }
-                 .add_attribute(ansi::attribute::bold),
-            };
-
-            color line_color { 30, 31, 44 };
-            color alt_line_color {
-                color { 21, 22, 30 }
-                 .add_attribute(ansi::attribute::dim)
-            };
-
-            color line_number_color {
-                color { 193, 195, 211 }
-                 .add_attribute(ansi::attribute::dim)
-            };
-            color separator_color { 100, 105, 140 };
-            color underline_color {
-                color { 220, 50, 47 }
-                 .add_attribute(ansi::attribute::bold)
-            };
-
-            color error_code_color {
-                color { 220, 50, 47 }
-                 .add_attribute(ansi::attribute::bold)
-            };
-            color code_color { 255, 255, 255 };
-            color domain_color {
-                color { 116, 107, 215 }
-                 .add_attribute(ansi::attribute::bold)
-            };
-            color source_color {
-                color { 150, 150, 150 }
-                 .add_attribute(ansi::attribute::dim)
-            };
-        } diagnostic;
-    }
-
-
-    class source_location
-    {
-    public:
-        source_location(std::size_t line, std::size_t column)
-            : m_line { line }, m_column { column }
-        {
-        }
-
-
-        source_location(std::size_t single)
-            : m_line { single }, m_column { single }
-        {
-        }
-
-
-        source_location() = default;
-
-
-        void
-        operator()(std::size_t line, std::size_t column)
-        {
-            m_line   = line;
-            m_column = column;
-        }
-
-
-        [[nodiscard]]
-        auto
-        line() const -> std::size_t
-        {
-            return m_line;
-        }
-
-
-        [[nodiscard]]
-        auto
-        column() const -> std::size_t
-        {
-            return m_column;
-        }
-
+        std::size_t line { 0 };
+        std::size_t column { 0 };
 
         auto
         operator==(const source_location &other) const -> bool
         {
-            return m_column == other.m_column && m_line == other.m_line;
+            return line == other.line && column == other.column;
         }
+    };
+}
 
-    private:
-        std::size_t m_line;
-        std::size_t m_column;
+
+namespace cchell::diagnostics
+{
+    struct theme
+    {
+        std::array<color, 3> tag_color {
+            color { 220, 50,  47  }
+             .add_attribute(
+                ansi::attribute::bold), /* error */
+            color { 181, 137, 0   }
+             .add_attribute(
+                ansi::attribute::bold), /* warning */
+            color { 38,  139, 210 }
+             .add_attribute(
+                ansi::attribute::bold)  /* note */
+        };
+
+        color line_color { 30, 31, 44 };
+        color alt_line_color {
+            color { 21, 22, 30 }
+             .add_attribute(ansi::attribute::dim)
+        };
+        color line_number_color {
+            color { 193, 195, 211 }
+             .add_attribute(ansi::attribute::dim)
+        };
+        color separator_color { 100, 105, 140 };
+        color underline_color {
+            color { 220, 50, 47 }
+             .add_attribute(ansi::attribute::bold)
+        };
+        color error_code_color {
+            color { 220, 50, 47 }
+             .add_attribute(ansi::attribute::bold)
+        };
+        color code_color { 255, 255, 255 };
+        color domain_color {
+            color { 116, 107, 215 }
+             .add_attribute(ansi::attribute::bold)
+        };
+        color source_color {
+            color { 150, 150, 150 }
+             .add_attribute(ansi::attribute::dim)
+        };
+
+
+        std::size_t extra_shown_line { 2 };
+        std::size_t right_padding { 5 };
     };
 
 
-    enum class message_level : std::uint8_t
+    inline constexpr theme default_theme {};
+
+
+    enum class severity : std::uint8_t
     {
         error,
         warning,
@@ -119,47 +87,85 @@ namespace cchell
 
     struct diagnostic
     {
+        friend class diagnostic_builder;
+
+        severity         level;
+        std::string      message;
+        std::string      annotation;
         std::string_view domain;
-        std::string_view raw;
-        std::string_view file { "null" };
-        source_location  source;
-        std::size_t      length;
 
-        std::string   message;
-        std::string   annotation;
-        message_level level;
+        source_location source;
+        std::size_t     length { 1 };
 
 
-        [[nodiscard]] auto to_string() -> std::string;
-        [[nodiscard]] auto message_to_string() -> std::string;
+        [[nodiscard]]
+        auto render(std::string_view raw_string,
+                    std::string_view input_file,
+                    const theme     &theme = default_theme) -> std::string;
+
+    private:
+        std::size_t m_padding;
+        std::size_t m_line_number_width;
+        std::string m_rendered;
 
 
-        auto set_domain(std::string_view domain) -> diagnostic &;
-        auto set_raw(std::string_view raw) -> diagnostic &;
-        auto set_file(std::string_view file) -> diagnostic &;
-        auto set_source(source_location source) -> diagnostic &;
-        auto set_length(std::size_t length) -> diagnostic &;
-        auto set_level(message_level level) -> diagnostic &;
+        auto format_line(std::size_t      line_num,
+                         std::string_view line,
+                         std::size_t      line_len,
+                         const theme     &theme) const -> std::string;
+
+
+        void render_header(const theme &theme);
+
+
+        auto create_colorless_source(std::string_view input_file) const
+            -> std::string;
+        void render_source(std::string_view colorless_source,
+                           const theme     &theme);
+
+        void render_line(std::size_t      line_num,
+                         std::string_view line,
+                         bool             error_line,
+                         const theme     &theme);
+
+        void render_annotation(const theme &theme);
+    };
+
+
+    class diagnostic_builder
+    {
+    public:
+        explicit diagnostic_builder(severity lvl);
+
+
+        auto domain(std::string_view domain) -> diagnostic_builder &&;
+        auto source(source_location source) -> diagnostic_builder &&;
+        auto length(std::size_t length) -> diagnostic_builder &&;
+
+        [[nodiscard]] auto build() && -> diagnostic;
 
 
         template <typename... T_Args>
         auto
-        set_message(std::format_string<T_Args...> fmt, T_Args &&...args)
-            -> diagnostic &
+        message(std::format_string<T_Args...> fmt, T_Args &&...args)
+            -> diagnostic_builder &&
         {
-            message = std::format(fmt, std::forward<T_Args>(args)...);
-            return *this;
+            m_diag.message = std::format(fmt, std::forward<T_Args>(args)...);
+            return std::move(*this);
         }
 
 
         template <typename... T_Args>
         auto
-        set_annotation(std::format_string<T_Args...> fmt, T_Args &&...args)
-            -> diagnostic &
+        annotation(std::format_string<T_Args...> fmt, T_Args &&...args)
+            -> diagnostic_builder &&
         {
-            annotation = std::format(fmt, std::forward<T_Args>(args)...);
-            return *this;
+            m_diag.annotation = std::format(fmt, std::forward<T_Args>(args)...);
+            return std::move(*this);
         }
+
+    private:
+        diagnostic m_diag;
     };
 
 
@@ -187,8 +193,7 @@ namespace std
         auto
         format(cchell::source_location source, T_FmtContext &ctx) const
         {
-            return format_to(ctx.out(), "{}:{}", source.line(),
-                             source.column());
+            return format_to(ctx.out(), "{}:{}", source.line, source.column);
         }
     };
 }

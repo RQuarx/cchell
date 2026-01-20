@@ -13,6 +13,9 @@
 #include "shared.cc" /* NOLINT */
 
 using namespace cchell::parser;
+using cchell::diagnostics::diagnostic;
+using cchell::diagnostics::diagnostic_builder;
+using cchell::diagnostics::severity;
 
 
 namespace
@@ -128,8 +131,7 @@ namespace
 
 
     auto
-    handle_path_verification(ast_node &node)
-        -> std::optional<cchell::diagnostic>
+    handle_path_verification(ast_node &node) -> std::optional<diagnostic>
     {
         fs::path path { node.data.substr(2) }; /* skip the ./ */
 
@@ -138,39 +140,36 @@ namespace
             path = fs::canonical(path);
 
             if (!fs::is_regular_file(path))
-                return cchell::diagnostic {}
-                    .set_domain("cchell::parser")
-                    .set_message("path '{}' is not a file", path.string())
-                    .set_annotation(
+                return diagnostic_builder { severity::error }
+                    .domain("cchell::parser")
+                    .message("path '{}' is not a file", path.string())
+                    .annotation(
                         "consider fixing the typo or the directory tree")
-                    .set_level(cchell::message_level::error)
-                    .set_source(node.source)
-                    .set_length(node.data.length());
+                    .source(node.source)
+                    .length(node.data.length())
+                    .build();
 
             if (access(path.c_str(), X_OK) != 0)
-                return cchell::diagnostic {}
-                    .set_domain("cchell::parser")
-                    .set_message("path '{}' is not an executable",
-                                 path.string())
-                    .set_annotation("consider changing the permission on '{}'",
-                                    path.string())
-                    .set_level(cchell::message_level::error)
-                    .set_source(node.source)
-                    .set_length(node.data.length());
+                return diagnostic_builder { severity::error }
+                    .domain("cchell::parser")
+                    .message("path '{}' is not an executable", path.string())
+                    .annotation("consider changing the permission on '{}'",
+                                path.string())
+                    .source(node.source)
+                    .length(node.data.length())
+                    .build();
 
             return std::nullopt;
         }
 
-        auto err {
-            cchell::diagnostic {}
-                .set_domain("cchell::parser")
-                .set_message("executable path '{}' doesn't exist", node.data)
-                .set_annotation(
-                    "consider fixing the typo or the directory tree")
-                .set_level(cchell::message_level::error)
-                .set_source(node.source)
-                .set_length(node.data.length())
-        };
+        auto err { diagnostic_builder { severity::error }
+                       .domain("cchell::parser")
+                       .message("executable path '{}' doesn't exist", node.data)
+                       .annotation(
+                           "consider fixing the typo or the directory tree")
+                       .source(node.source)
+                       .length(node.data.length())
+                       .build() };
 
         fs::path closest;
         if (auto closest_buff { find_nearest_looking_path(path) };
@@ -179,19 +178,21 @@ namespace
         else /* NOLINT */
             closest = *closest_buff;
 
-        using std::literals::operator""s;
+        static std::string string_buffer;
 
-        static std::vector<std::string> strings_buffer;
+        string_buffer += "./" + closest.relative_path().string();
+        std::string_view new_data { string_buffer.begin()
+                                        + string_buffer.rfind("./"),
+                                    string_buffer.end() };
 
-        strings_buffer.emplace_back("./"s + closest.relative_path().string());
 
         char response { cchell::ask['y']['n'](
             "executable path '{}' not found, do you mean '{}'?", node.data,
-            strings_buffer.back()) };
+            new_data) };
 
         if (response != 'y') return err;
 
-        node.set_data(strings_buffer.back());
+        node.set_data(new_data);
         return std::nullopt;
     }
 }
@@ -237,11 +238,11 @@ impl::verify_command(ast_node &node) -> std::optional<diagnostic>
     return std::nullopt;
 
 command_not_exist:
-    return diagnostic {}
-        .set_domain("cchell::parser")
-        .set_message("command '{}' doesn't exist", node.data)
-        .set_annotation("consider fixing $PATH or installing the program")
-        .set_level(message_level::error)
-        .set_source(node.source)
-        .set_length(node.data.length());
+    return diagnostic_builder { severity::error }
+        .domain("cchell::parser")
+        .message("command '{}' doesn't exist", node.data)
+        .annotation("consider fixing $PATH or installing the program")
+        .source(node.source)
+        .length(node.data.length())
+        .build();
 }

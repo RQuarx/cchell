@@ -7,6 +7,9 @@
 #include "diagnostic.hh"
 #include "lexer.hh"
 
+using cchell::diagnostics::diagnostic_builder;
+using cchell::diagnostics::severity;
+
 
 namespace
 {
@@ -78,12 +81,12 @@ namespace
 
             if (i > start)
             {
-                source(source.line(), (index + start) - line_start_index);
+                source.column = (index + start) - line_start_index;
                 out.emplace_back(token_type::word,
                                  word.substr(start, i - start), source);
             }
 
-            source(source.line(), index + i);
+            source.column = (index + i) - line_start_index;
             out.emplace_back(get_punct_token_type(word[i]), word.substr(i, 1),
                              source);
 
@@ -92,7 +95,7 @@ namespace
 
         if (start < word.length())
         {
-            source(source.line(), (index + start) - line_start_index);
+            source.column = (index + start) - line_start_index;
             out.emplace_back(token_type::word, word.substr(start), source);
         }
     }
@@ -108,7 +111,7 @@ cchell::lexer::lex(std::string_view string) -> std::vector<token>
 
     std::size_t     index { 0 };
     std::size_t     line_start_index { 0 };
-    source_location source { 0, 0 };
+    source_location source;
 
     while (index < string.length())
     {
@@ -116,7 +119,9 @@ cchell::lexer::lex(std::string_view string) -> std::vector<token>
 
         if (c == '\n')
         {
-            source(source.line() + 1, 0);
+            source.line++;
+            source.column = 0;
+
             line_start_index = ++index;
             continue;
         }
@@ -124,7 +129,7 @@ cchell::lexer::lex(std::string_view string) -> std::vector<token>
         if (std::isspace(c) != 0)
         {
             index++;
-            source(source.line(), index - line_start_index);
+            source.column = index - line_start_index;
             continue;
         }
 
@@ -138,8 +143,8 @@ cchell::lexer::lex(std::string_view string) -> std::vector<token>
 
         get_tokens_from_word(word, index, line_start_index, source, tokens);
 
-        index = next_whitespace;
-        source(source.line(), index - line_start_index);
+        index         = next_whitespace;
+        source.column = index - line_start_index;
     }
 
     return tokens;
@@ -172,13 +177,12 @@ cchell::lexer::impl::verifier::operator()(
                 char open { matching_open(c) };
 
                 if (open == 0 || bracket[open].empty())
-                    return diagnostic {}
-                        .set_domain("cchell::lexer")
-                        .set_message("extra closing bracket '{}' found.", c)
-                        .set_annotation("try removing the '{}'.", c)
-                        .set_level(message_level::error)
-                        .set_source(token.source())
-                        .set_length(1);
+                    return diagnostic_builder { severity::error }
+                        .domain("cchell::lexer")
+                        .message("extra closing bracket '{}' found.", c)
+                        .annotation("try removing the '{}'.", c)
+                        .source(token.source())
+                        .build();
 
                 bracket[open].pop();
             }
@@ -201,22 +205,20 @@ cchell::lexer::impl::verifier::operator()(
 
     for (const auto &[open, stack] : bracket)
         if (!stack.empty())
-            return diagnostic {}
-                .set_domain("cchell::lexer")
-                .set_message("unclosed bracket '{}' found.", open)
-                .set_annotation("consider adding a closing '{}'.", open)
-                .set_level(message_level::error)
-                .set_source(stack.top())
-                .set_length(1);
+            return diagnostic_builder { severity::error }
+                .domain("cchell::lexer")
+                .message("unclosed bracket '{}' found.", open)
+                .annotation("consider adding a closing '{}'.", open)
+                .source(stack.top())
+                .build();
 
     if (active_quote)
-        return diagnostic {}
-            .set_domain("cchell::lexer")
-            .set_message("unclosed quote {} found.", *active_quote)
-            .set_annotation("consider adding a closing {}.", *active_quote)
-            .set_level(message_level::error)
-            .set_source(quote_location)
-            .set_length(1);
+        return diagnostic_builder { severity::error }
+            .domain("cchell::lexer")
+            .message("unclosed quote {} found.", *active_quote)
+            .annotation("consider adding a closing {}.", *active_quote)
+            .source(quote_location)
+            .build();
 
     return std::nullopt;
 }

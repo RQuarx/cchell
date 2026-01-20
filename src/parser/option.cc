@@ -48,7 +48,7 @@ impl::option(const lexer::token &token, ast_node &parent) -> bool
                                           .set_parent(&parent)) };
 
     cchell::source_location source { token.source() };
-    source(source.line(), assign_index + 1);
+    source.column = assign_index + 1;
 
     split_key_value(token.data(), root,
                     { ast_type::identifier, ast_type::parameter },

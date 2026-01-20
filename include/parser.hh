@@ -89,7 +89,9 @@ namespace cchell::parser
 
     namespace impl
     {
-        struct verifier : cchell::verifier<ast_node &>
+        using namespace diagnostics;
+
+        struct verifier : diagnostics::verifier<ast_node &>
         {
             [[nodiscard]]
             auto operator()(ast_node &nodes) const

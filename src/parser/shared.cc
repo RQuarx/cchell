@@ -43,8 +43,8 @@ namespace
         auto &[key_type, value_type] { type };
         auto &[key_source, value_source] { source };
 
-        std::string_view key { data.substr(0, value_source.column() - 1) };
-        std::string_view value { data.substr(value_source.column()) };
+        std::string_view key { data.substr(0, value_source.column - 1) };
+        std::string_view value { data.substr(value_source.column) };
 
         parent->emplace_back(ast_node {}
                                  .set_type(key_type)
