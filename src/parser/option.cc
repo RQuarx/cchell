@@ -2,7 +2,6 @@
 #include <ranges>
 #include <string_view>
 
-#include "diagnostic.hh"
 #include "parser.hh"
 #include "parser/impl.hh"
 

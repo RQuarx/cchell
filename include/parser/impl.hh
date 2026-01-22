@@ -14,6 +14,7 @@ namespace cchell::parser
         auto assignment(const lexer::token &token, ast_node &parent) -> bool;
         auto command(const lexer::token &token, ast_node &parent) -> bool;
         auto option(const lexer::token &token, ast_node &parent) -> bool;
+        auto string(const lexer::token &token, ast_node &parent) -> bool;
 
         using diagnostics::diagnostic;
 

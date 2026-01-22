@@ -103,11 +103,17 @@ main(int argc, char **argv, char **envp) -> int
     if (show_version) return print_version(), 0;
 
     if (commands.empty()) return 0;
+    std::println("commands: {}", commands);
 
     auto tokens { cchell::lexer::lex(commands) };
 
     if (auto diag { cchell::lexer::verify(tokens) })
+    {
         std::cerr << diag->render(commands, "argv");
+        return 1;
+    }
+
+    std::println("{}", tokens);
 
     auto ast { cchell::parser::parse(tokens) };
 

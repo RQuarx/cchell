@@ -1,3 +1,4 @@
+#include <limits>
 #include <ranges>
 #include <stack>
 #include <string_view>
@@ -17,7 +18,7 @@ namespace
     auto
     is_punct(char c) -> bool
     {
-        return std::string_view { "`!$%^&*(){}[]|;:\"'<>,?" }.find(c)
+        return std::string_view { "!$%^&*(){}[]|;:<>,?" }.find(c)
             != std::string_view::npos;
     }
 
@@ -36,6 +37,13 @@ namespace
     }
 
 
+    constexpr auto
+    is_quote(char c) -> bool
+    {
+        return c == '\'' || c == '"' || c == '`';
+    }
+
+
     [[nodiscard]]
     auto
     get_punct_token_type(char c) -> cchell::lexer::token_type
@@ -44,10 +52,6 @@ namespace
 
         switch (c)
         {
-        case '\'': [[fallthrough]];
-        case '"':  [[fallthrough]];
-        case '`':  return token_type::quote;
-
         case '(': [[fallthrough]];
         case ')': [[fallthrough]];
         case '{': [[fallthrough]];
@@ -64,12 +68,12 @@ namespace
     }
 
 
-    void
+    auto
     get_tokens_from_word(std::string_view                   word,
                          std::size_t                        index,
                          std::size_t                        line_start_index,
                          cchell::source_location            source,
-                         std::vector<cchell::lexer::token> &out)
+                         std::vector<cchell::lexer::token> &out) -> std::size_t
     {
         using namespace cchell::lexer;
 
@@ -77,6 +81,7 @@ namespace
 
         for (std::size_t i { 0 }; i < word.length(); i++)
         {
+            if (is_quote(word[i])) return i;
             if (!is_punct(word[i])) continue;
 
             if (i > start)
@@ -98,8 +103,59 @@ namespace
             source.column = (index + start) - line_start_index;
             out.emplace_back(token_type::word, word.substr(start), source);
         }
+
+        return std::numeric_limits<std::size_t>::max();
     }
 
+
+    auto
+    get_tokens_from_string(std::string_view                   string,
+                           std::size_t                       &index,
+                           std::size_t                       &line_start_index,
+                           cchell::source_location           &source,
+                           std::vector<cchell::lexer::token> &tokens)
+        -> std::uint8_t
+    {
+        using cchell::lexer::token_type;
+        if (!is_quote(string[index])) return 0;
+
+        tokens.emplace_back(token_type::quote, string.substr(index, 1), source);
+        source.column++;
+
+        std::size_t closing_quote { string.find(string[index], index + 1) };
+        if (closing_quote == std::string::npos)
+        {
+            tokens.emplace_back(token_type::word, string.substr(index + 1),
+                                source);
+            return 2;
+        }
+
+        std::size_t len { closing_quote - (index + 1) };
+
+        tokens.emplace_back(token_type::word, string.substr(index + 1, len),
+                            source);
+
+
+        for (std::size_t i { index + 1 }; i < closing_quote; i++)
+        {
+            if (string[i] == '\n')
+            {
+                source.line++;
+                source.column    = 0;
+                line_start_index = ++index;
+            }
+            else
+                source.column++;
+        }
+
+
+        tokens.emplace_back(token_type::quote, string.substr(closing_quote, 1),
+                            source);
+        source.column++;
+
+        index = closing_quote + 1;
+        return 1;
+    }
 }
 
 
@@ -120,11 +176,18 @@ cchell::lexer::lex(std::string_view string) -> std::vector<token>
         if (c == '\n')
         {
             source.line++;
-            source.column = 0;
-
+            source.column    = 0;
             line_start_index = ++index;
+
             continue;
         }
+
+        if (std::uint8_t res { get_tokens_from_string(
+                string, index, line_start_index, source, tokens) };
+            res == 1)
+            continue;
+        else if (res == 2) /* NOLINT */
+            return tokens;
 
         if (std::isspace(c) != 0)
         {
@@ -141,9 +204,14 @@ cchell::lexer::lex(std::string_view string) -> std::vector<token>
         std::string_view word { string.data() + index,
                                 next_whitespace - index };
 
-        get_tokens_from_word(word, index, line_start_index, source, tokens);
+        std::size_t skip { get_tokens_from_word(word, index, line_start_index,
+                                                source, tokens) };
 
-        index         = next_whitespace;
+        if (skip != std::numeric_limits<std::size_t>::max())
+            index = skip;
+        else
+            index = next_whitespace;
+
         source.column = index - line_start_index;
     }
 
@@ -161,8 +229,7 @@ cchell::lexer::impl::verifier::operator()(
         { '[', {} }
     };
 
-    std::optional<char> active_quote;
-    source_location     quote_location {};
+    const token *quote { nullptr };
 
     for (const token &token : tokens)
     {
@@ -191,15 +258,10 @@ cchell::lexer::impl::verifier::operator()(
 
         if (token.type() == token_type::quote)
         {
-            char q { token.data()[0] };
-
-            if (!active_quote)
-            {
-                active_quote   = q;
-                quote_location = token.source();
-            }
-            else if (*active_quote == q)
-                active_quote.reset();
+            if (quote == nullptr)
+                quote = &token;
+            else
+                quote = nullptr;
         }
     }
 
@@ -212,12 +274,12 @@ cchell::lexer::impl::verifier::operator()(
                 .source(stack.top())
                 .build();
 
-    if (active_quote)
+    if (quote != nullptr)
         return diagnostic_builder { severity::error }
             .domain("cchell::lexer")
-            .message("unclosed quote {} found.", *active_quote)
-            .annotation("consider adding a closing {}.", *active_quote)
-            .source(quote_location)
+            .message("unclosed quote {} found.", quote->data())
+            .annotation("consider adding a closing {}.", quote->data())
+            .source(quote->source())
             .build();
 
     return std::nullopt;

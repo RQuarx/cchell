@@ -24,6 +24,7 @@ cchell::parser::parse(const std::vector<lexer::token> &tokens)
         }
         else
         {
+            if (impl::string(token, *root)) continue;
             if (impl::option(token, *root)) continue;
         }
 
