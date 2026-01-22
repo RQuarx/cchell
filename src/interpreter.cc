@@ -7,7 +7,6 @@
 
 #include <unistd.h>
 
-#include "diagnostic.hh"
 #include "interpreter.hh"
 #include "parser.hh"
 #include "shared.hh"

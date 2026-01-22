@@ -1,1 +1,4 @@
-cchell_parser_source = files('assignment.cc', 'command.cc', 'option.cc', 'string.cc')
+cchell_parser_source = files('assignment.cc',
+                             'command.cc',
+                             'option.cc',
+                             'string.cc')
