@@ -203,11 +203,11 @@ impl::command(const lexer::token &token, ast_node &parent) -> bool
 {
     if (!is_command(token.data())) return false;
 
-    parent->emplace_back(ast_node {}
-                             .set_type(ast_type::command)
-                             .set_source(token.source())
-                             .set_parent(&parent)
-                             .set_data(token.data()));
+    parent.child.emplace_back(ast_node {}
+                                  .set_type(ast_type::command)
+                                  .set_source(token.source())
+                                  .set_parent(&parent)
+                                  .set_data(token.data()));
 
     return true;
 }

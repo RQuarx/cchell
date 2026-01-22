@@ -33,10 +33,10 @@ impl::assignment(const lexer::token &token, ast_node &parent) -> bool
     std::size_t assign_index { token.data().find('=') };
     if (assign_index == std::string_view::npos) return false;
 
-    auto &root { parent->emplace_back(ast_node {}
-                                          .set_type(ast_type::assignment)
-                                          .set_source(token.source())
-                                          .set_parent(&parent)) };
+    auto &root { parent.child.emplace_back(ast_node {}
+                                               .set_type(ast_type::assignment)
+                                               .set_source(token.source())
+                                               .set_parent(&parent)) };
 
     cchell::source_location source { token.source() };
     source.column = assign_index + 1;

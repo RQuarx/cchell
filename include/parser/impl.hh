@@ -1,9 +1,8 @@
 #pragma once
 #include <optional>
 
-#include "diagnostic.hh"
-
 namespace cchell::lexer { class token; }
+namespace cchell::diagnostics { struct diagnostic; }
 
 
 namespace cchell::parser
@@ -16,6 +15,7 @@ namespace cchell::parser
         auto command(const lexer::token &token, ast_node &parent) -> bool;
         auto option(const lexer::token &token, ast_node &parent) -> bool;
 
+        using diagnostics::diagnostic;
 
         auto verify_command(ast_node &node) -> std::optional<diagnostic>;
     }

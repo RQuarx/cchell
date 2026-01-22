@@ -109,6 +109,8 @@ impl::executables::closest(std::string_view name,
 {
     if (m_paths.empty()) throw std::runtime_error { "no executables indexed" };
 
+    if (auto it { m_paths.find(name) }; it != m_paths.end()) return &(*it);
+
     const std::pair<const std::string, std::filesystem::path> *closest {
         nullptr
     };

@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <ranges>
+#include <string_view>
 
+#include "diagnostic.hh"
 #include "parser.hh"
 #include "parser/impl.hh"
 
@@ -32,26 +34,23 @@ impl::option(const lexer::token &token, ast_node &parent) -> bool
 
     std::size_t assign_index { token.data().find('=') };
 
-    if (assign_index == std::string_view::npos)
+    ast_node &root { parent.child.emplace_back(ast_node {}
+                                                   .set_type(ast_type::option)
+                                                   .set_source(token.source())
+                                                   .set_parent(&parent)
+                                                   .set_data(token.data())) };
+
+
+    if (assign_index != std::string_view::npos)
     {
-        parent->emplace_back(ast_node {}
-                                 .set_type(ast_type::option)
-                                 .set_source(token.source())
-                                 .set_parent(&parent)
-                                 .set_data(token.data()));
-        return true;
+        cchell::source_location source { token.source() };
+        source.column = assign_index + 1;
+
+        split_key_value(token.data(), root,
+                        { ast_type::identifier, ast_type::parameter },
+                        { token.source(), source });
     }
 
-    auto &root { parent->emplace_back(ast_node {}
-                                          .set_type(ast_type::option)
-                                          .set_source(token.source())
-                                          .set_parent(&parent)) };
-
-    cchell::source_location source { token.source() };
-    source.column = assign_index + 1;
-
-    split_key_value(token.data(), root,
-                    { ast_type::identifier, ast_type::parameter },
-                    { token.source(), source });
     return true;
 }
+

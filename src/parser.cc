@@ -1,4 +1,3 @@
-#include "diagnostic.hh"
 #include "lexer.hh"
 #include "parser.hh"
 #include "parser/impl.hh"
@@ -8,8 +7,6 @@ auto
 cchell::parser::parse(const std::vector<lexer::token> &tokens)
     -> std::unique_ptr<ast_node>
 {
-    if (auto diag { lexer::verify(tokens) }) throw *diag;
-
     auto root { std::make_unique<ast_node>(
         ast_node {}.set_type(ast_type::statement)) };
 

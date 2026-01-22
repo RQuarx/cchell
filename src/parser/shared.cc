@@ -46,17 +46,17 @@ namespace
         std::string_view key { data.substr(0, value_source.column - 1) };
         std::string_view value { data.substr(value_source.column) };
 
-        parent->emplace_back(ast_node {}
-                                 .set_type(key_type)
-                                 .set_source(key_source)
-                                 .set_parent(&parent)
-                                 .set_data(key));
+        parent.child.emplace_back(ast_node {}
+                                      .set_type(key_type)
+                                      .set_source(key_source)
+                                      .set_parent(&parent)
+                                      .set_data(key));
 
-        parent->emplace_back(ast_node {}
-                                 .set_type(value_type)
-                                 .set_source(value_source)
-                                 .set_parent(&parent)
-                                 .set_data(value));
+        parent.child.emplace_back(ast_node {}
+                                      .set_type(value_type)
+                                      .set_source(value_source)
+                                      .set_parent(&parent)
+                                      .set_data(value));
         return true;
     }
 }

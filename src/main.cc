@@ -5,8 +5,11 @@
 #include <string_view>
 
 #include <lyra/lyra.hpp>
+#include <sys/wait.h>
 
 #include "diagnostic.hh"
+#include "interpreter.hh"
+#include "lexer.hh"
 #include "parser.hh"
 #include "shared.hh"
 
@@ -99,29 +102,34 @@ main(int argc, char **argv, char **envp) -> int
     if (show_help) return print_help(*argv), 0;
     if (show_version) return print_version(), 0;
 
-    std::println("{}", commands.empty() ? "empty" : commands);
     if (commands.empty()) return 0;
 
     auto tokens { cchell::lexer::lex(commands) };
-    std::println("{}", tokens);
 
-    std::unique_ptr<cchell::parser::ast_node> ast;
+    if (auto diag { cchell::lexer::verify(tokens) })
+        std::cerr << diag->render(commands, "argv");
 
-    try
-    {
-        ast = cchell::parser::parse(tokens);
-    }
-    catch (cchell::diagnostics::diagnostic &diag)
-    {
-        std::print("{}", diag.render(commands, "argv"));
-        return 1;
-    }
+    auto ast { cchell::parser::parse(tokens) };
 
-    std::println("{}", *ast);
     if (auto diag { cchell::parser::verify(*ast) })
-        std::print("{}", diag->render(commands, "argv"));
+        std::cerr << diag->render(commands, "argv");
     else
         std::println("{}", *ast);
+
+    pid_t child_pid { -1 };
+    if (auto buf { cchell::interpreter::execute(ast) }; !buf)
+    {
+        std::cerr << buf.error() << '\n';
+        return 1;
+    }
+    else /* NOLINT */
+        child_pid = *buf;
+
+    int status { 0 };
+    if (waitpid(child_pid, &status, 0) == -1) return 1;
+
+    if (WIFEXITED(status)) return WEXITSTATUS(status);
+    if (WIFSIGNALED(status)) return 128 + WTERMSIG(status);
 
     return 0;
 }

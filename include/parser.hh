@@ -36,7 +36,7 @@ namespace cchell::parser
 
 
         auto
-        set_type(ast_type type) -> ast_node &
+        set_type(ast_type type) noexcept -> ast_node &
         {
             this->type = type;
             return *this;
@@ -44,7 +44,7 @@ namespace cchell::parser
 
 
         auto
-        set_parent(ast_node *parent) -> ast_node &
+        set_parent(ast_node *parent) noexcept -> ast_node &
         {
             this->parent = parent;
             return *this;
@@ -52,7 +52,7 @@ namespace cchell::parser
 
 
         auto
-        set_data(std::string_view data) -> ast_node &
+        set_data(std::string_view data) noexcept -> ast_node &
         {
             this->data = data;
             return *this;
@@ -60,24 +60,10 @@ namespace cchell::parser
 
 
         auto
-        set_source(source_location source) -> ast_node &
+        set_source(source_location source) noexcept -> ast_node &
         {
             this->source = source;
             return *this;
-        }
-
-
-        auto
-        operator->() -> std::list<ast_node> *
-        {
-            return &child;
-        }
-
-
-        auto
-        operator->() const -> const std::list<ast_node> *
-        {
-            return &child;
         }
     };
 
