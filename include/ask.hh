@@ -4,7 +4,6 @@
 #include <format>
 #include <print>
 #include <ranges>
-#include <vector>
 
 #include <unistd.h>
 

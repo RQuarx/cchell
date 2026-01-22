@@ -94,8 +94,6 @@ main(int argc, char **argv, char **envp) -> int
              | lyra::help { show_help } };
     /* clang-format on */
 
-    std::println("{}", cchell::shared::tty_status.stdin());
-
     if (auto res { cli.parse({ argc, argv }) }; !res)
         return std::println("{}", res.message()), 1;
 
@@ -103,8 +101,6 @@ main(int argc, char **argv, char **envp) -> int
     if (show_version) return print_version(), 0;
 
     if (commands.empty()) return 0;
-    std::println("commands: {}", commands);
-
     auto tokens { cchell::lexer::lex(commands) };
 
     if (auto diag { cchell::lexer::verify(tokens) })
@@ -113,14 +109,17 @@ main(int argc, char **argv, char **envp) -> int
         return 1;
     }
 
-    std::println("{}", tokens);
+    // std::println("{}", tokens);
 
     auto ast { cchell::parser::parse(tokens) };
 
     if (auto diag { cchell::parser::verify(*ast) })
+    {
         std::cerr << diag->render(commands, "argv");
-    else
-        std::println("{}", *ast);
+        return 1;
+    }
+
+    // std::println("{}", *ast);
 
     pid_t child_pid { -1 };
     if (auto buf { cchell::interpreter::execute(ast) }; !buf)
