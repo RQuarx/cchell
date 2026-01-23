@@ -1,5 +1,7 @@
 #include <algorithm>
+#include <atomic>
 #include <cmath>
+#include <cstdint>
 #include <ranges>
 #include <string>
 #include <string_view>
@@ -57,14 +59,9 @@ namespace
 
 
     auto
-    get_number_length(std::size_t n) -> std::size_t
+    get_number_length(std::uint32_t n) -> std::uint8_t
     {
-        /* log10(n) will return the the width/length of n - 1 */
-        /* and converting floating-point to an integer will truncate
-           the float, which is just flooring for positive values */
-        /* this way, we don't need any allocation, unlike using
-           `std::to_string(n).length()`*/
-        return std::log10(n) + 1.0F;
+        return std::log10(n) + 1;
     }
 
 
@@ -149,13 +146,13 @@ diagnostic::render_colored(std::string_view raw_string,
                            std::string_view input_file,
                            const theme     &theme)
 {
-    const std::size_t error_line { source.line + 1 };
+    const std::uint32_t error_line { source.line + 1 };
 
-    const std::size_t first_line { error_line > theme.extra_shown_line
-                                       ? error_line - theme.extra_shown_line
-                                       : 1 };
+    const std::uint32_t first_line { error_line > theme.extra_shown_line
+                                         ? error_line - theme.extra_shown_line
+                                         : 1 };
 
-    const std::size_t last_line { error_line + theme.extra_shown_line };
+    const std::uint32_t last_line { error_line + theme.extra_shown_line };
 
     auto lines { get_visible_lines(raw_string, first_line, last_line) };
 
@@ -218,7 +215,7 @@ diagnostic::render_header(const theme &theme)
 
 
 auto
-diagnostic::format_line(std::size_t      line_num,
+diagnostic::format_line(std::uint32_t    line_num,
                         std::string_view line,
                         std::size_t      line_len,
                         const theme     &theme) const -> std::string
@@ -227,7 +224,7 @@ diagnostic::format_line(std::size_t      line_num,
     std::string line_num_string;
 
 
-    if (line_num == std::numeric_limits<std::size_t>::max())
+    if (line_num == std::numeric_limits<std::uint32_t>::max())
     {
         bg              = theme.alt_line_color;
         line_num_string = std::string(m_line_number_width, ' ');
@@ -263,14 +260,14 @@ void
 diagnostic::render_source(std::string_view colorless_source, const theme &theme)
 {
     m_rendered
-        += format_line(std::numeric_limits<std::size_t>::max(),
+        += format_line(std::numeric_limits<std::uint32_t>::max(),
                        colorize(colorless_source, theme.source_color, false),
                        colorless_source.length(), theme);
 }
 
 
 void
-diagnostic::render_line(std::size_t      line_num,
+diagnostic::render_line(std::uint32_t    line_num,
                         std::string_view line,
                         bool             error_line,
                         const theme     &theme)

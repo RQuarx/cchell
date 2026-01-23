@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <format>
 #include <optional>
 #include <string>
@@ -12,8 +13,8 @@ namespace cchell
 {
     struct source_location
     {
-        std::size_t line { 0 };
-        std::size_t column { 0 };
+        std::uint32_t line { 0 };
+        std::uint32_t column { 0 };
 
         auto
         operator==(const source_location &other) const -> bool
@@ -69,8 +70,8 @@ namespace cchell::diagnostics
         };
 
 
-        std::size_t extra_shown_line { 2 };
-        std::size_t right_padding { 5 };
+        std::uint32_t extra_shown_line { 2 };
+        std::uint32_t right_padding { 5 };
     };
 
 
@@ -110,7 +111,7 @@ namespace cchell::diagnostics
 
 
         [[nodiscard]]
-        auto format_line(std::size_t      line_num,
+        auto format_line(std::uint32_t    line_num,
                          std::string_view line,
                          std::size_t      line_len,
                          const theme     &theme) const -> std::string;
@@ -125,7 +126,7 @@ namespace cchell::diagnostics
         void render_source(std::string_view colorless_source,
                            const theme     &theme);
 
-        void render_line(std::size_t      line_num,
+        void render_line(std::uint32_t    line_num,
                          std::string_view line,
                          bool             error_line,
                          const theme     &theme);
