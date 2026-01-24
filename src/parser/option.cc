@@ -3,7 +3,6 @@
 #include <string_view>
 
 #include "parser.hh"
-#include "parser/impl.hh"
 
 #include "shared.cc" /* NOLINT */
 

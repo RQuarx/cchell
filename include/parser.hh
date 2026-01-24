@@ -75,6 +75,11 @@ namespace cchell::parser
 
     namespace impl
     {
+        auto assignment(const lexer::token &token, ast_node &parent) -> bool;
+        auto command(const lexer::token &token, ast_node &parent) -> bool;
+        auto option(const lexer::token &token, ast_node &parent) -> bool;
+        auto string(const lexer::token &token, ast_node &parent) -> bool;
+
         using namespace diagnostics;
 
         struct verifier : diagnostics::verifier<ast_node &>
@@ -83,6 +88,8 @@ namespace cchell::parser
             auto operator()(ast_node &nodes) const
                 -> std::optional<diagnostic> override;
         };
+
+        auto verify_command(ast_node &node) -> std::optional<diagnostic>;
     }
 
     inline constexpr impl::verifier verify;

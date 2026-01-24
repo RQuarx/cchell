@@ -7,7 +7,6 @@
 #include "ask.hh"
 #include "diagnostic.hh"
 #include "parser.hh"
-#include "parser/impl.hh"
 #include "shared.hh"
 
 #include "shared.cc" /* NOLINT */
