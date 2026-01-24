@@ -5,7 +5,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "diagnostic.hh"
 #include "lexer.hh"
 
 using cchell::diagnostics::diagnostic_builder;

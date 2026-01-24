@@ -7,7 +7,7 @@
 #include <lyra/lyra.hpp>
 #include <sys/wait.h>
 
-#include "diagnostic.hh"
+#include "diagnostics.hh"
 #include "interpreter.hh"
 #include "lexer.hh"
 #include "parser.hh"

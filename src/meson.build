@@ -1,6 +1,7 @@
 subdir('parser')
 
-cchell_source = files('diagnostic.cc',
+cchell_source = files('diagnostics.cc',
+                      'interaction.cc',
                       'interpreter.cc',
                       'lexer.cc',
                       'main.cc',

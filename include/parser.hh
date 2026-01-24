@@ -5,7 +5,7 @@
 #include <string_view>
 #include <vector>
 
-#include "diagnostic.hh"
+#include "diagnostics.hh"
 #include "lexer.hh"
 
 namespace cchell::lexer { class token; }

@@ -3,7 +3,7 @@
 #include <string_view>
 #include <vector>
 
-#include "diagnostic.hh"
+#include "diagnostics.hh"
 
 
 namespace cchell::lexer

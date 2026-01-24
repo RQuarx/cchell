@@ -4,8 +4,7 @@
 #include <tuple>
 #include <vector>
 
-#include "ask.hh"
-#include "diagnostic.hh"
+#include "interaction.hh"
 #include "parser.hh"
 #include "shared.hh"
 
@@ -15,6 +14,7 @@ using namespace cchell::parser;
 using cchell::diagnostics::diagnostic;
 using cchell::diagnostics::diagnostic_builder;
 using cchell::diagnostics::severity;
+using cchell::interaction::ask;
 
 
 namespace
@@ -36,7 +36,6 @@ namespace
             if (i > 0 && RESERVED_CHAR.contains(c) && data[i - 1] == '\\')
                 continue;
 
-            std::println("{}", c);
             return false;
         }
 
@@ -185,7 +184,7 @@ namespace
                                     string_buffer.end() };
 
 
-        char response { cchell::ask['y']['n'](
+        char response { ask["yn"](
             "executable path '{}' not found, do you mean '{}'?", node.data,
             new_data) };
 
@@ -221,9 +220,9 @@ impl::verify_command(ast_node &node) -> std::optional<diagnostic>
 
     const auto *closest { shared::executables.closest(node.data) };
 
-    if (closest == nullptr
-        && ask['y']['n']("command '{}' doesn't exist, do you mean '{}'?",
-                         node.data, closest->first)
+    if (closest != nullptr
+        && ask["yn"]("command '{}' doesn't exist, do you mean '{}'?", node.data,
+                     closest->first)
                != 'y')
         return diagnostic_builder { severity::error }
             .domain("cchell::parser")
@@ -232,6 +231,7 @@ impl::verify_command(ast_node &node) -> std::optional<diagnostic>
             .source(node.source)
             .length(node.data.length())
             .build();
+
     node.set_data(closest->first);
     return std::nullopt;
 }

@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "color.hh"
-#include "diagnostic.hh"
+#include "diagnostics.hh"
 #include "shared.hh"
 
 
