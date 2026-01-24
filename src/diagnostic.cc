@@ -21,13 +21,13 @@ namespace
 
     auto
     get_visible_lines(std::string_view text,
-                      std::size_t      first_line,
-                      std::size_t      last_line)
-        -> std::vector<std::pair<std::size_t, std::string_view>>
+                      std::uint32_t    first_line,
+                      std::uint32_t    last_line)
+        -> std::vector<std::pair<std::uint32_t, std::string_view>>
     {
-        std::vector<std::pair<std::size_t, std::string_view>> result;
+        std::vector<std::pair<std::uint32_t, std::string_view>> result;
 
-        std::size_t line_num { 1 };
+        std::uint32_t line_num { 1 };
 
         for (auto part : text | std::views::split('\n'))
         {
@@ -59,9 +59,21 @@ namespace
 
 
     auto
-    get_number_length(std::uint32_t n) -> std::uint8_t
+    get_digits_amount(std::uint32_t n) -> std::uint8_t
     {
-        return std::log10(n) + 1;
+        /* a uint32 have a maximum value of 4,294,967,295
+           which is only 10 digits. Which is not that
+           difficult to hardcode */
+        if (n >= 1'000'000'000) return 10;
+        if (n >= 100'000'000) return 9;
+        if (n >= 10'000'000) return 8;
+        if (n >= 1'000'000) return 7;
+        if (n >= 100'000) return 6;
+        if (n >= 10'000) return 5;
+        if (n >= 1'000) return 4;
+        if (n >= 100) return 3;
+        if (n >= 10) return 2;
+        return 1;
     }
 
 
@@ -156,7 +168,7 @@ diagnostic::render_colored(std::string_view raw_string,
 
     auto lines { get_visible_lines(raw_string, first_line, last_line) };
 
-    m_line_number_width = get_number_length(last_line) + 1; /* + padding */
+    m_line_number_width = get_digits_amount(last_line) + 1; /* + padding */
 
     render_header(theme);
     std::string colorless_source { create_colorless_source(input_file) };
@@ -233,7 +245,7 @@ diagnostic::format_line(std::uint32_t    line_num,
     {
         bg = line_num % 2 != 0 ? theme.line_color : theme.alt_line_color;
         line_num_string
-            = std::string(m_line_number_width - get_number_length(line_num),
+            = std::string(m_line_number_width - get_digits_amount(line_num),
                           ' ')
             + std::to_string(line_num);
     }
