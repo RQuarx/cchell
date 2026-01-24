@@ -6,7 +6,7 @@
 
 namespace cchell::interaction
 {
-    struct theme
+    struct style
     {
         color tag_color {
             color { 38, 139, 210 }
@@ -14,7 +14,7 @@ namespace cchell::interaction
         };
     };
 
-    inline constexpr theme default_theme {};
+    inline constexpr style default_style {};
 
 
     namespace impl
@@ -23,7 +23,7 @@ namespace cchell::interaction
         {
             std::string message;
             std::string options;
-            theme       theme;
+            style       style;
 
             void reset();
             void render();
@@ -37,7 +37,7 @@ namespace cchell::interaction
             auto operator[](const std::string &options) -> ask &;
 
             auto set_echo(bool echo) -> ask &;
-            auto set_theme(theme theme = default_theme) -> ask &;
+            auto set_style(style style = default_style) -> ask &;
 
             [[nodiscard]] auto get_last_error() const -> int;
 
@@ -68,8 +68,8 @@ namespace cchell::interaction
             /**
              * wait and returns a response from the user.
              *
-             * the function can returns a value > 0 for a valid value,
-             * 0 on EOF, or -1 on errors.
+             * the function can return a positive non-zero
+             * value for a valid value, 0 on EOF, or -1 on errors.
              */
             auto mf_get_response() -> int;
         };

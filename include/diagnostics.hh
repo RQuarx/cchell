@@ -12,7 +12,7 @@
 
 namespace cchell::diagnostics
 {
-    struct theme
+    struct style
     {
         std::array<color, 3> tag_color {
             color { 220, 50,  47  }
@@ -60,7 +60,7 @@ namespace cchell::diagnostics
     };
 
 
-    inline constexpr theme default_theme {};
+    inline constexpr style default_style {};
 
 
     enum class severity : std::uint8_t
@@ -87,7 +87,7 @@ namespace cchell::diagnostics
         [[nodiscard]]
         auto render(std::string_view raw_string,
                     std::string_view input_file,
-                    const theme     &theme = default_theme) -> std::string;
+                    const style     &style = default_style) -> std::string;
 
     private:
         std::size_t m_padding;
@@ -99,29 +99,29 @@ namespace cchell::diagnostics
         auto format_line(std::uint32_t    line_num,
                          std::string_view line,
                          std::size_t      line_len,
-                         const theme     &theme) const -> std::string;
+                         const style     &style) const -> std::string;
 
         [[nodiscard]]
         auto create_colorless_source(std::string_view input_file) const
             -> std::string;
 
 
-        void render_header(const theme &theme);
+        void render_header(const style &style);
 
         void render_source(std::string_view colorless_source,
-                           const theme     &theme);
+                           const style     &style);
 
         void render_line(std::uint32_t    line_num,
                          std::string_view line,
                          bool             error_line,
-                         const theme     &theme);
+                         const style     &style);
 
-        void render_annotation(const theme &theme);
+        void render_annotation(const style &style);
 
 
         void render_colored(std::string_view raw_string,
                             std::string_view input_file,
-                            const theme     &theme);
+                            const style     &style);
         void render_colorless(std::string_view input_file);
     };
 

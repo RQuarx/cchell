@@ -135,12 +135,12 @@ diagnostic_builder::build() && -> diagnostic
 auto
 diagnostic::render(std::string_view raw_string,
                    std::string_view input_file,
-                   const theme     &theme) -> std::string
+                   const style     &style) -> std::string
 {
     m_rendered.clear();
     m_padding = 0;
 
-    shared::tty_status.stderr() ? render_colored(raw_string, input_file, theme)
+    shared::tty_status.stderr() ? render_colored(raw_string, input_file, style)
                                 : render_colorless(input_file);
 
     return m_rendered;
@@ -150,21 +150,21 @@ diagnostic::render(std::string_view raw_string,
 void
 diagnostic::render_colored(std::string_view raw_string,
                            std::string_view input_file,
-                           const theme     &theme)
+                           const style     &style)
 {
     const std::uint32_t error_line { source.line + 1 };
 
-    const std::uint32_t first_line { error_line > theme.extra_shown_line
-                                         ? error_line - theme.extra_shown_line
+    const std::uint32_t first_line { error_line > style.extra_shown_line
+                                         ? error_line - style.extra_shown_line
                                          : 1 };
 
-    const std::uint32_t last_line { error_line + theme.extra_shown_line };
+    const std::uint32_t last_line { error_line + style.extra_shown_line };
 
     auto lines { get_visible_lines(raw_string, first_line, last_line) };
 
     m_line_number_width = get_digits_amount(last_line) + 1; /* + padding */
 
-    render_header(theme);
+    render_header(style);
     std::string colorless_source { create_colorless_source(input_file) };
 
     /* to calculate the padding, we need to get the max length of all
@@ -175,14 +175,14 @@ diagnostic::render_colored(std::string_view raw_string,
     /* and then we add the max length to the padding and the line number
        width, which normalizes the padding width */
     m_padding = std::max(m_padding, colorless_source.length())
-              + theme.right_padding + m_line_number_width;
+              + style.right_padding + m_line_number_width;
 
-    render_source(colorless_source, theme);
+    render_source(colorless_source, style);
 
     for (const auto &[i, line] : lines)
-        render_line(i, line, i == error_line, theme);
+        render_line(i, line, i == error_line, style);
 
-    render_annotation(theme);
+    render_annotation(style);
 }
 
 
@@ -204,18 +204,18 @@ R"({} in {} at {}:{}:{}
 
 
 void
-diagnostic::render_header(const theme &theme)
+diagnostic::render_header(const style &style)
 {
     std::string_view severity { severity_to_string(level) };
 
     if (domain.empty())
         m_rendered = std::format("{}{}{}: {}\n",
-                                 theme.tag_color[std::to_underlying(level)],
+                                 style.tag_color[std::to_underlying(level)],
                                  severity, color::reset(), message);
     else
         m_rendered = std::format("{}{}{} at {}{}{}: {}\n",
-                                 theme.tag_color[std::to_underlying(level)],
-                                 severity, color::reset(), theme.domain_color,
+                                 style.tag_color[std::to_underlying(level)],
+                                 severity, color::reset(), style.domain_color,
                                  domain, color::reset(), message);
 }
 
@@ -224,7 +224,7 @@ auto
 diagnostic::format_line(std::uint32_t    line_num,
                         std::string_view line,
                         std::size_t      line_len,
-                        const theme     &theme) const -> std::string
+                        const style     &style) const -> std::string
 {
     color       bg { 0, 0, 0 };
     std::string line_num_string;
@@ -232,12 +232,12 @@ diagnostic::format_line(std::uint32_t    line_num,
 
     if (line_num == std::numeric_limits<std::uint32_t>::max())
     {
-        bg              = theme.alt_line_color;
+        bg              = style.alt_line_color;
         line_num_string = std::string(m_line_number_width, ' ');
     }
     else
     {
-        bg = line_num % 2 != 0 ? theme.line_color : theme.alt_line_color;
+        bg = line_num % 2 != 0 ? style.line_color : style.alt_line_color;
         line_num_string
             = std::string(m_line_number_width - get_digits_amount(line_num),
                           ' ')
@@ -247,8 +247,8 @@ diagnostic::format_line(std::uint32_t    line_num,
     std::size_t pad { m_padding > line_len ? m_padding - line_len : 0 };
 
     return std::format(
-        "{:ansi_bg}{}{} {}{}| {}{}{}{}\n", bg, theme.line_number_color,
-        line_num_string, color::reset_attributes(), theme.separator_color,
+        "{:ansi_bg}{}{} {}{}| {}{}{}{}\n", bg, style.line_number_color,
+        line_num_string, color::reset_attributes(), style.separator_color,
         color::reset_attributes(), line, std::string(pad, ' '), color::reset());
 }
 
@@ -263,12 +263,12 @@ diagnostic::create_colorless_source(std::string_view input_file) const
 
 
 void
-diagnostic::render_source(std::string_view colorless_source, const theme &theme)
+diagnostic::render_source(std::string_view colorless_source, const style &style)
 {
     m_rendered
         += format_line(std::numeric_limits<std::uint32_t>::max(),
-                       colorize(colorless_source, theme.source_color, false),
-                       colorless_source.length(), theme);
+                       colorize(colorless_source, style.source_color, false),
+                       colorless_source.length(), style);
 }
 
 
@@ -276,7 +276,7 @@ void
 diagnostic::render_line(std::uint32_t    line_num,
                         std::string_view line,
                         bool             error_line,
-                        const theme     &theme)
+                        const style     &style)
 {
     std::string colored_line;
 
@@ -286,24 +286,24 @@ diagnostic::render_line(std::uint32_t    line_num,
         auto [error, tail] { split_at(rest, length) };
 
         colored_line = std::format(
-            "{}{}{}{}{}{}{}{}", theme.code_color, left,
-            color::reset_attributes(), theme.error_code_color, error,
-            color::reset_attributes(), theme.code_color, tail);
+            "{}{}{}{}{}{}{}{}", style.code_color, left,
+            color::reset_attributes(), style.error_code_color, error,
+            color::reset_attributes(), style.code_color, tail);
     }
     else
-        colored_line = colorize(line, theme.code_color, false);
+        colored_line = colorize(line, style.code_color, false);
 
-    m_rendered += format_line(line_num, colored_line, line.length(), theme);
+    m_rendered += format_line(line_num, colored_line, line.length(), style);
 }
 
 
 void
-diagnostic::render_annotation(const theme &theme)
+diagnostic::render_annotation(const style &style)
 {
     std::size_t prefix { m_line_number_width + 3 };
 
     m_rendered.append(prefix + source.column, ' ');
-    m_rendered += std::format("{}", theme.underline_color);
+    m_rendered += std::format("{}", style.underline_color);
     m_rendered.append(length, '^');
     m_rendered += color::reset();
     m_rendered += '\n';

@@ -23,7 +23,7 @@ question::render()
 {
     std::cout.flush();
 
-    std::print(std::cerr, "{}ask{}: {} [{}/", theme.tag_color, color::reset(),
+    std::print(std::cerr, "{}ask{}: {} [{}/", style.tag_color, color::reset(),
                message, static_cast<char>(std::toupper(options[0])));
 
     for (auto i : std::views::iota(1UZ, options.length()))
@@ -57,9 +57,9 @@ ask::set_echo(bool echo) -> ask &
 
 
 auto
-ask::set_theme(theme theme) -> ask &
+ask::set_style(style style) -> ask &
 {
-    return m_question.theme = theme, *this;
+    return m_question.style = style, *this;
 }
 
 
