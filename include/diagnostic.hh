@@ -7,22 +7,7 @@
 #include <string>
 
 #include "color.hh"
-
-
-namespace cchell
-{
-    struct source_location
-    {
-        std::uint32_t line { 0 };
-        std::uint32_t column { 0 };
-
-        auto
-        operator==(const source_location &other) const -> bool
-        {
-            return line == other.line && column == other.column;
-        }
-    };
-}
+#include "source_location.hh"
 
 
 namespace cchell::diagnostics
@@ -183,26 +168,5 @@ namespace cchell::diagnostics
         [[nodiscard]]
         virtual auto operator()(T) const -> std::optional<diagnostic>
             = 0;
-    };
-}
-
-
-namespace std
-{
-    template <> struct formatter<cchell::source_location>
-    {
-        static constexpr auto
-        parse(format_parse_context &ctx)
-        {
-            return ctx.begin();
-        }
-
-
-        template <class T_FmtContext>
-        auto
-        format(cchell::source_location source, T_FmtContext &ctx) const
-        {
-            return format_to(ctx.out(), "{}:{}", source.line, source.column);
-        }
     };
 }

@@ -1,6 +1,4 @@
 #pragma once
-#include <format>
-#include <iomanip>
 #include <optional>
 #include <string_view>
 #include <vector>
@@ -89,67 +87,4 @@ namespace cchell::lexer
 
 
     inline constexpr impl::verifier verify;
-}
-
-
-namespace std
-{
-    template <> struct formatter<cchell::lexer::token_type>
-    {
-        static constexpr auto
-        parse(format_parse_context &ctx)
-        {
-            return ctx.begin();
-        }
-
-
-        template <class T_FmtContext>
-        auto
-        format(cchell::lexer::token_type type, T_FmtContext &ctx) const
-            -> T_FmtContext::iterator
-        {
-            using cchell::lexer::token_type;
-
-            string_view name;
-
-            switch (type)
-            {
-            case token_type::word:    name = "token_type::word"; break;
-            case token_type::bracket: name = "token_type::bracket"; break;
-            case token_type::quote:   name = "token_type::quote"; break;
-            case token_type::pipe:    name = "token_type::pipe"; break;
-            case token_type::dollar:  name = "token_type::dollar"; break;
-            case token_type::none:    name = "token_type::none"; break;
-            }
-
-            return format_to(ctx.out(), "{}", name);
-        }
-    };
-
-
-    template <> struct formatter<cchell::lexer::token>
-    {
-        static constexpr auto
-        parse(format_parse_context &ctx)
-        {
-            return ctx.begin();
-        }
-
-
-        template <class T_FmtContext>
-        auto
-        format(const cchell::lexer::token &token, T_FmtContext &ctx) const
-            -> T_FmtContext::iterator
-        {
-            string data { (ostringstream {} << quoted(token.data())).str() };
-
-            return format_to(ctx.out(),
-                             R"({{
-  "source": [ {} ],
-  "data":   {},
-  "type":   {}
-}})",
-                             token.source(), data, token.type());
-        }
-    };
 }

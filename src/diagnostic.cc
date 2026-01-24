@@ -1,11 +1,5 @@
 #include <algorithm>
-#include <atomic>
-#include <cmath>
-#include <cstdint>
 #include <ranges>
-#include <string>
-#include <string_view>
-#include <utility>
 #include <vector>
 
 #include "color.hh"

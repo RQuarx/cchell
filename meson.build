@@ -11,6 +11,12 @@ cchell_include    = include_directories('include')
 cchell_build_args = [ '-DPROJECT_NAME="@0@"'   .format(meson.project_name()),
                       '-DPROJECT_VERSION="@0@"'.format(meson.project_version()) ]
 
+if get_option('buildtype') == 'release'
+        cchell_build_args += [ '-DPROJECT_IS_RELEASE=true' ]
+else
+        cchell_build_args += [ '-DPROJECT_IS_RELEASE=false' ]
+endif
+
 cchell_deps = [ dependency('lyra', fallback: ['Lyra', 'lyra_dep']) ]
 
 
