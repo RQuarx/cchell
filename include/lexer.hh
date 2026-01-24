@@ -10,22 +10,11 @@ namespace cchell::lexer
 {
     enum class token_type : std::uint8_t
     {
-        /* a generic "word" token (command, options, envars, etc) */
         word,
-
-        /* a token that represents an open or
-           closing bracket ('{}', '()', '[]') */
         bracket,
-
-        /* a token that represents a quote type (', ", `) */
         quote,
-
-        /* a token that represents the pipe (|) operator */
         pipe,
-
-        /* a token that represents a dollar-sign ($) */
         dollar,
-
         none
     };
 

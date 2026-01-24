@@ -91,6 +91,9 @@ namespace cchell
         private:
             std::string m_options;
             bool        m_echo { true };
+
+
+            auto ask_and_get_response(std::string_view message);
         };
     }
 

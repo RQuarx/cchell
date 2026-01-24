@@ -1,7 +1,6 @@
 #include <cctype>
 #include <string_view>
 
-#include "diagnostic.hh"
 #include "parser.hh"
 
 

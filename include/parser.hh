@@ -35,36 +35,10 @@ namespace cchell::parser
         source_location  source;
 
 
-        auto
-        set_type(ast_type type) noexcept -> ast_node &
-        {
-            this->type = type;
-            return *this;
-        }
-
-
-        auto
-        set_parent(ast_node *parent) noexcept -> ast_node &
-        {
-            this->parent = parent;
-            return *this;
-        }
-
-
-        auto
-        set_data(std::string_view data) noexcept -> ast_node &
-        {
-            this->data = data;
-            return *this;
-        }
-
-
-        auto
-        set_source(source_location source) noexcept -> ast_node &
-        {
-            this->source = source;
-            return *this;
-        }
+        auto set_type(ast_type type) noexcept -> ast_node &;
+        auto set_source(source_location source) noexcept -> ast_node &;
+        auto set_parent(ast_node *parent) noexcept -> ast_node &;
+        auto set_data(std::string_view data) noexcept -> ast_node &;
     };
 
 
