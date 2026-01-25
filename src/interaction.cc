@@ -82,7 +82,7 @@ ask::mf_get_response() -> int
             m_error = errno;
             return -1;
         }
-        else if (n == 0) /* NOLINT */
+        else if (n == 0) /* NOLINT: Do not use 'else' after 'return' */
         {
             m_error = EOF;
             return 0;

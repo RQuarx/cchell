@@ -173,7 +173,7 @@ namespace
         if (auto closest_buff { find_nearest_looking_path(path) };
             !closest_buff)
             return err;
-        else /* NOLINT */
+        else /* NOLINT: Do not use 'else' after 'return' */
             closest = *closest_buff;
 
         static std::string string_buffer;

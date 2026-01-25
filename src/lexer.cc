@@ -39,7 +39,7 @@ namespace
     constexpr auto
     is_quote(char c) -> bool
     {
-        return c == '\'' || c == '"' || c == '`';
+        return c == '\'' || c == '"';
     }
 
 
@@ -185,7 +185,7 @@ cchell::lexer::lex(std::string_view string) -> std::vector<token>
                 string, index, line_start_index, source, tokens) };
             res == 1)
             continue;
-        else if (res == 2) /* NOLINT */
+        else if (res == 2) /* NOLINT: Do not use 'else' after 'return' */
             return tokens;
 
         if (std::isspace(c) != 0)

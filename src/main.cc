@@ -127,7 +127,7 @@ main(int argc, char **argv, char **envp) -> int
         std::cerr << buf.error() << '\n';
         return 1;
     }
-    else /* NOLINT */
+    else /* NOLINT: Do not use 'else' after 'return' */
         child_pid = *buf;
 
     int status { 0 };

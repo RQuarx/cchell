@@ -80,8 +80,7 @@ interpreter::execute(const std::unique_ptr<ast_node> &tree)
 
     if (auto buf { ast_to_process(tree) }; !buf)
         return std::unexpected { buf.error() };
-    else /* NOLINT: clangd doesnt understand that
-           `buf` is scoped to the if-else */
+    else /* NOLINT: Do not use 'else' after 'return' */
         proc = *buf;
 
     pid_t pid { fork() };
