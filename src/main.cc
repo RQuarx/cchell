@@ -12,6 +12,7 @@
 #include "lexer.hh"
 #include "parser.hh"
 #include "shared.hh"
+#include "formatters.hh"
 
 
 namespace

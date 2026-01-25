@@ -3,6 +3,7 @@
 #include <stack>
 #include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "lexer.hh"
@@ -13,6 +14,23 @@ using cchell::diagnostics::severity;
 
 namespace
 {
+    enum class quote_type : char
+    {
+        none    = '\0',
+        single  = '\'',
+        double_ = '"',
+    };
+
+
+    auto
+    operator==(quote_type a, char b) -> bool
+    {
+        if (a == quote_type::single) return b == '\'';
+        if (a == quote_type::double_) return b == '"';
+        return true;
+    }
+
+
     [[nodiscard]]
     auto
     is_punct(char c) -> bool
@@ -37,9 +55,26 @@ namespace
 
 
     constexpr auto
-    is_quote(char c) -> bool
+    is_quote(char c) -> quote_type
     {
-        return c == '\'' || c == '"';
+        if (c == '\'') return quote_type::single;
+        if (c == '"') return quote_type::double_;
+        return quote_type::none;
+    }
+
+
+    auto
+    decode_escape(char c) -> char
+    {
+        switch (c)
+        {
+        case 'n':  return '\n';
+        case 't':  return '\t';
+        case 'r':  return '\r';
+        case '\\': return '\\';
+        case '"':  return '"';
+        default:   return c;
+        }
     }
 
 
@@ -80,7 +115,7 @@ namespace
 
         for (std::size_t i { 0 }; i < word.length(); i++)
         {
-            if (is_quote(word[i])) return i;
+            if (is_quote(word[i]) != quote_type::none) return i;
             if (!is_punct(word[i])) continue;
 
             if (i > start)
@@ -116,7 +151,7 @@ namespace
         -> std::uint8_t
     {
         using cchell::lexer::token_type;
-        if (!is_quote(string[index])) return 0;
+        if (is_quote(string[index]) == quote_type::none) return 0;
 
         tokens.emplace_back(token_type::quote, string.substr(index, 1), source);
         source.column++;
@@ -167,12 +202,13 @@ cchell::lexer::lex(std::string_view string) -> std::vector<token>
     std::size_t     index { 0 };
     std::size_t     line_start_index { 0 };
     source_location source;
+    bool            escaped { false };
 
     while (index < string.length())
     {
         char c { string[index] };
 
-        if (c == '\n')
+        if (!escaped && c == '\n')
         {
             source.line++;
             source.column    = 0;

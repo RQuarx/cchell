@@ -220,17 +220,20 @@ impl::verify_command(ast_node &node) -> std::optional<diagnostic>
 
     const auto *closest { shared::executables.closest(node.data) };
 
-    if (closest != nullptr
-        && ask["yn"]("command '{}' doesn't exist, do you mean '{}'?", node.data,
+    auto diag { diagnostic_builder { severity::error }
+                    .domain("cchell::parser")
+                    .message("command '{}' doesn't exist", node.data)
+                    .annotation(
+                        "consider fixing $PATH or installing the program")
+                    .source(node.source)
+                    .length(node.data.length())
+                    .build() };
+
+    if (closest == nullptr
+        || ask["yn"]("command '{}' doesn't exist, do you mean '{}'?", node.data,
                      closest->first)
                != 'y')
-        return diagnostic_builder { severity::error }
-            .domain("cchell::parser")
-            .message("command '{}' doesn't exist", node.data)
-            .annotation("consider fixing $PATH or installing the program")
-            .source(node.source)
-            .length(node.data.length())
-            .build();
+        return diag;
 
     node.set_data(closest->first);
     return std::nullopt;

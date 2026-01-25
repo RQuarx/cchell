@@ -1,5 +1,5 @@
 #pragma once
-#if PROJECT_IS_RELEASE
+#if !PROJECT_IS_RELEASE
 #include <format>
 #include <iomanip>
 #include <sstream>
