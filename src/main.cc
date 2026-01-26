@@ -102,6 +102,13 @@ main(int argc, char **argv, char **envp) -> int
     if (show_version) return print_version(), 0;
 
     if (commands.empty()) return 0;
+
+    for (char c : commands)
+    {
+        std::print("{} ", (int)c);
+    }
+    std::println("");
+
     auto tokens { cchell::lexer::lex(commands) };
 
     if (auto diag { cchell::lexer::verify(tokens) })
@@ -110,7 +117,7 @@ main(int argc, char **argv, char **envp) -> int
         return 1;
     }
 
-    // std::println("{}", tokens);
+    std::println("{}", tokens);
 
     auto ast { cchell::parser::parse(tokens) };
 
@@ -120,7 +127,7 @@ main(int argc, char **argv, char **envp) -> int
         return 1;
     }
 
-    // std::println("{}", *ast);
+    std::println("{}", *ast);
 
     pid_t child_pid { -1 };
     if (auto buf { cchell::interpreter::execute(ast) }; !buf)

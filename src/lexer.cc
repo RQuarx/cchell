@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <limits>
 #include <ranges>
 #include <stack>
@@ -75,6 +76,25 @@ namespace
         case '"':  return '"';
         default:   return c;
         }
+    }
+
+
+    auto
+    find_next_whitespace(std::string_view string, std::size_t pos)
+        -> std::size_t
+    {
+        for (auto i : std::views::iota(pos, string.length()))
+            if (std::isspace(string[i]) != 0)
+            {
+                std::uint8_t backslash_count { 0 };
+
+                for (std::size_t j { i - 1 }; j >= 0 && string[j] == '\\'; j--)
+                    backslash_count++;
+
+                if (backslash_count % 2 == 0) return i;
+            }
+
+        return std::string_view::npos;
     }
 
 
@@ -199,10 +219,11 @@ cchell::lexer::lex(std::string_view string) -> std::vector<token>
     std::vector<token> tokens;
     tokens.reserve(string.size() / 2);
 
-    std::size_t     index { 0 };
-    std::size_t     line_start_index { 0 };
-    source_location source;
-    bool            escaped { false };
+    std::size_t      index { 0 };
+    std::size_t      line_start_index { 0 };
+    std::string_view current_word;
+    source_location  source;
+    bool             escaped { false };
 
     while (index < string.length())
     {
@@ -217,6 +238,13 @@ cchell::lexer::lex(std::string_view string) -> std::vector<token>
             continue;
         }
 
+        if (!escaped && c == '\\')
+        {
+            escaped = true;
+            index++;
+            continue;
+        }
+
         if (std::uint8_t res { get_tokens_from_string(
                 string, index, line_start_index, source, tokens) };
             res == 1)
@@ -224,17 +252,15 @@ cchell::lexer::lex(std::string_view string) -> std::vector<token>
         else if (res == 2) /* NOLINT: Do not use 'else' after 'return' */
             return tokens;
 
-        if (std::isspace(c) != 0)
+        if (!escaped && std::isspace(c) != 0)
         {
             index++;
             source.column = index - line_start_index;
-            continue;
         }
 
-        std::size_t next_whitespace { index + 1 };
-        while (next_whitespace < string.length()
-               && std::isspace(string[next_whitespace]) == 0)
-            next_whitespace++;
+        std::size_t next_whitespace { find_next_whitespace(string, index + 1) };
+        if (next_whitespace == std::string_view::npos)
+            next_whitespace = string.length();
 
         std::string_view word { string.data() + index,
                                 next_whitespace - index };
@@ -248,6 +274,7 @@ cchell::lexer::lex(std::string_view string) -> std::vector<token>
             index = next_whitespace;
 
         source.column = index - line_start_index;
+        escaped = false;
     }
 
     return tokens;

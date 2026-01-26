@@ -1,5 +1,3 @@
-#include <algorithm>
-#include <ranges>
 #include <string_view>
 
 #include "parser.hh"
@@ -16,11 +14,8 @@ namespace
     {
         if (data.empty()) return false;
         if (!is_identifier_start(data.front(), true)) return false;
-        if (std::ranges::count(data, '=') > 1) return false;
 
-        return std::ranges::all_of(data | std::views::drop(1),
-                                   [](char c) -> bool
-                                   { return is_identifier_char(c, true); });
+        return true;
     }
 }
 

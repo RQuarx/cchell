@@ -2,6 +2,7 @@
 #include <cstring>
 #include <expected>
 #include <memory>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -19,6 +20,34 @@ using namespace cchell;
 
 namespace
 {
+    auto
+    clean_escape(std::string_view string) -> std::string
+    {
+        std::string clean;
+        clean.reserve(string.length());
+
+        bool escape { false };
+        for (auto c : string)
+        {
+            if (c == '\\')
+            {
+                if (escape) clean += c;
+                escape = !escape;
+                continue;
+            }
+
+            if (escape)
+                escape = false;
+            else
+                clean += c;
+        }
+
+        if (escape) clean += '\\';
+
+        return clean;
+    }
+
+
     auto
     ast_to_process(const std::unique_ptr<ast_node> &tree)
         -> std::expected<interpreter::impl::process, std::string>
@@ -47,7 +76,7 @@ namespace
             }
 
             if (child.type == ast_type::option)
-                proc.argv.emplace_back(child.data);
+                proc.argv.emplace_back(clean_escape(child.data));
         }
 
         return proc;

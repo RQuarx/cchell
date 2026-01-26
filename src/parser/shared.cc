@@ -27,7 +27,7 @@ namespace
     constexpr auto
     is_identifier_char(char c, bool is_option = true) -> bool
     {
-        return std::isalnum(c) != 0 || c == '_' || c == '='
+        return std::isalnum(c) != 0 || c == '_' || c == '=' || c == '\\'
             || (is_option && (c == '-'));
     }
 
