@@ -22,6 +22,7 @@ namespace cchell::parser
         assignment,
         identifier,
         literal,
+        none,
     };
 
 

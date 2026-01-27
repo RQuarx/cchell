@@ -115,7 +115,7 @@ R"({{
         auto
         format(const cchell::parser::ast_node &node, T_FormatContext &ctx) const
         {
-            mf_format_node(ctx, node, "", true);
+            mf_format_node(ctx, node, "", true, cchell::parser::ast_type::none);
             return ctx.out();
         }
 
@@ -126,11 +126,13 @@ R"({{
         mf_format_node(T_FormatContext                &ctx,
                        const cchell::parser::ast_node &node,
                        const string                   &prefix,
-                       bool                            is_last)
+                       bool                            is_last,
+                       cchell::parser::ast_type        prev_type)
         {
             auto out { ctx.out() };
 
-            if (!prefix.empty())
+            if (prev_type == cchell::parser::ast_type::statement
+                || !prefix.empty())
                 out = format_to(out, "{}{}", prefix, is_last ? "└── " : "├── ");
 
             out = format_to(out, "{}", node.type);
@@ -140,15 +142,16 @@ R"({{
             out = format_to(out, "\n");
 
             std::string child_prefix { prefix };
-            child_prefix += (is_last ? "    " : "│   ");
+            if (prev_type == cchell::parser::ast_type::statement
+                || !prefix.empty())
+                child_prefix += (is_last ? "    " : "│   ");
 
-            auto it { node.child.begin() };
             auto end { node.child.end() };
 
-            for (; it != end; it++)
+            for (auto it { node.child.begin() }; it != end; it++)
             {
                 bool last { next(it) == end };
-                mf_format_node(ctx, *it, child_prefix, last);
+                mf_format_node(ctx, *it, child_prefix, last, node.type);
             }
         }
     };

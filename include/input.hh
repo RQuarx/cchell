@@ -22,6 +22,7 @@ namespace cchell
         auto operator=(input &&other) noexcept -> input &;
 
 
+        /* returns 0 on success, `errno` on error, and EOF (-1) on EOF. */
         auto read(std::string &text) noexcept -> int;
 
     private:
@@ -37,6 +38,7 @@ namespace cchell
         auto read_stdin(std::string &text) noexcept -> int;
 
 
+        static void install_sigint_action();
         static void sigint_handler(int sig);
     };
 }

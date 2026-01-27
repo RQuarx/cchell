@@ -221,7 +221,6 @@ cchell::lexer::lex(std::string_view string) -> std::vector<token>
 
     std::size_t      index { 0 };
     std::size_t      line_start_index { 0 };
-    std::string_view current_word;
     source_location  source;
     bool             escaped { false };
 

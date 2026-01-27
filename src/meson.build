@@ -1,6 +1,7 @@
 subdir('parser')
 
 cchell_source = files('diagnostics.cc',
+                      'input.cc',
                       'interaction.cc',
                       'interpreter.cc',
                       'lexer.cc',

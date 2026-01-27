@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <limits>
 #include <ranges>
 #include <vector>
 
@@ -152,6 +153,14 @@ diagnostic::render_colored(std::string_view raw_string,
                            std::string_view input_file,
                            const style     &style)
 {
+    if (length == 0)
+    {
+        render_header(style);
+        m_rendered += std::format("  {}", message);
+
+        return;
+    }
+
     const std::uint32_t error_line { source.line + 1 };
 
     const std::uint32_t first_line { error_line > style.extra_shown_line
@@ -190,6 +199,12 @@ void
 diagnostic::render_colorless(std::string_view input_file)
 {
     std::string_view severity { severity_to_string(level) };
+
+    if (length == 0)
+    {
+        m_rendered = std::format("{} in {}: {}", severity, domain, message);
+        return;
+    }
 
     m_rendered = std::format(
         /* clang-format off */

@@ -1,3 +1,4 @@
+#include <cstring>
 #include <format>
 #include <memory>
 #include <print>
@@ -8,11 +9,12 @@
 #include <sys/wait.h>
 
 #include "diagnostics.hh"
+#include "formatters.hh"
+#include "input.hh"
 #include "interpreter.hh"
 #include "lexer.hh"
 #include "parser.hh"
 #include "shared.hh"
-#include "formatters.hh"
 
 
 namespace
@@ -77,6 +79,109 @@ namespace
                                              env.substr(idx + 1));
         }
     }
+
+
+    auto
+    run_commands_from_argv(std::string_view commands) -> int
+    {
+        auto tokens { cchell::lexer::lex(commands) };
+
+        if (auto diag { cchell::lexer::verify(tokens) })
+        {
+            std::cerr << diag->render(commands, "argv");
+            return 1;
+        }
+
+        // std::println("{}", tokens);
+
+        auto ast { cchell::parser::parse(tokens) };
+
+        if (auto diag { cchell::parser::verify(*ast) })
+        {
+            std::cerr << diag->render(commands, "argv");
+            return 1;
+        }
+
+        // std::println("{}", *ast);
+
+        pid_t child_pid { -1 };
+        if (auto buf { cchell::interpreter::execute(ast) }; !buf)
+        {
+            std::cerr << buf.error() << '\n';
+            return 1;
+        }
+        else /* NOLINT: Do not use 'else' after 'return' */
+            child_pid = *buf;
+
+        int status { 0 };
+        if (waitpid(child_pid, &status, 0) == -1) return 1;
+
+        if (WIFEXITED(status)) return WEXITSTATUS(status);
+        if (WIFSIGNALED(status)) return 128 + WTERMSIG(status);
+
+        return 0;
+    }
+
+
+    auto
+    run_repl() -> int
+    {
+        auto        input { cchell::input::create() };
+        std::string text;
+
+        while (true)
+        {
+            std::print(std::cerr, "$ ");
+            int res { input->read(text) };
+
+            if (res == EOF)
+            {
+                std::cerr << "\n[cchell: EOF] exiting\n";
+                break;
+            }
+
+            if (res == EINTR)
+            {
+                std::cerr << "^C\n";
+                continue;
+            }
+
+            if (res > 0)
+            {
+                using namespace cchell::diagnostics;
+                std::cerr << diagnostic_builder { severity::error }
+                                 .domain("cchell::input::read")
+                                 .message("{}", std::strerror(errno))
+                                 .length(0)
+                                 .build()
+                                 .render("", "stdin");
+
+                continue;
+            }
+
+            auto tokens { cchell::lexer::lex(text) };
+
+            if (auto diag { cchell::lexer::verify(tokens) })
+            {
+                std::cerr << diag->render(text, "argv");
+                continue;
+            }
+
+            std::println("{}", tokens);
+
+            auto ast { cchell::parser::parse(tokens) };
+
+            if (auto diag { cchell::parser::verify(*ast) })
+            {
+                std::cerr << diag->render(text, "argv");
+                continue;
+            }
+
+            std::println("{}", *ast);
+        }
+
+        return 0;
+    }
 }
 
 
@@ -101,48 +206,6 @@ main(int argc, char **argv, char **envp) -> int
     if (show_help) return print_help(*argv), 0;
     if (show_version) return print_version(), 0;
 
-    if (commands.empty()) return 0;
-
-    for (char c : commands)
-    {
-        std::print("{} ", (int)c);
-    }
-    std::println("");
-
-    auto tokens { cchell::lexer::lex(commands) };
-
-    if (auto diag { cchell::lexer::verify(tokens) })
-    {
-        std::cerr << diag->render(commands, "argv");
-        return 1;
-    }
-
-    std::println("{}", tokens);
-
-    auto ast { cchell::parser::parse(tokens) };
-
-    if (auto diag { cchell::parser::verify(*ast) })
-    {
-        std::cerr << diag->render(commands, "argv");
-        return 1;
-    }
-
-    std::println("{}", *ast);
-
-    pid_t child_pid { -1 };
-    if (auto buf { cchell::interpreter::execute(ast) }; !buf)
-    {
-        std::cerr << buf.error() << '\n';
-        return 1;
-    }
-    else /* NOLINT: Do not use 'else' after 'return' */
-        child_pid = *buf;
-
-    int status { 0 };
-    if (waitpid(child_pid, &status, 0) == -1) return 1;
-
-    if (WIFEXITED(status)) return WEXITSTATUS(status);
-    if (WIFSIGNALED(status)) return 128 + WTERMSIG(status);
-
-    return 0;
+    if (commands.empty()) return run_repl();
+    return run_commands_from_argv(commands);
 }

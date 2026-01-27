@@ -11,6 +11,8 @@
 
 using cchell::input;
 
+input *input::m_instance { nullptr };
+
 
 auto
 input::create() noexcept -> std::expected<input, std::string>
@@ -29,7 +31,7 @@ input::create() noexcept -> std::expected<input, std::string>
         if (tcsetattr(STDIN_FILENO, TCSANOW, &newt) < 0)
             return std::unexpected { std::strerror(errno) };
 
-        std::signal(SIGINT, input::sigint_handler);
+        install_sigint_action();
     }
     else
         cchell::input::m_instance = nullptr;
@@ -67,13 +69,20 @@ input::operator=(input &&other) noexcept -> input &
 
 
 void
-input::sigint_handler(int sig)
+input::install_sigint_action()
 {
-    if (sig == SIGINT && m_instance != nullptr)
-    {
-        m_instance->m_sigint_triggered.store(true, std::memory_order_relaxed);
-        std::signal(SIGINT, input::sigint_handler);
-    }
+    struct sigaction sa {};
+    sa.sa_handler = input::sigint_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+
+    sigaction(SIGINT, &sa, nullptr);
+}
+
+
+void
+input::sigint_handler(int /* sig */)
+{
 }
 
 
@@ -82,8 +91,7 @@ input::read(std::string &text) noexcept -> int
 {
     text.clear();
 
-    if (shared::tty_status.stdin())
-        return read_stdin(text);
+    if (shared::tty_status.stdin()) return read_stdin(text);
     return 0;
 }
 
@@ -97,12 +105,21 @@ input::read_stdin(std::string &text) noexcept -> int
 
     while (reading)
     {
-        if (auto n { ::read(STDIN_FILENO, &ch, 1) }; n < 0)
-            return errno;
-        else if (n == 0) /* NOLINT: Do not use 'else' after 'return' */
-            return EOF;
+        if (::read(STDIN_FILENO, &ch, 1) < 0) return errno;
 
-        
+        if (ch == 0x04) return EOF;
 
+        if (!escaped && ch == '\\')
+            escaped = true;
+        else
+        {
+            if (!escaped && ch == '\n') reading = false;
+            escaped = false;
+        }
+
+        std::fputc(ch, stderr);
+        text += ch;
     }
+
+    return 0;
 }
