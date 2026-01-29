@@ -1,41 +1,55 @@
 #pragma once
 #include <atomic>
-#include <expected>
 #include <string>
 
 #include <termios.h>
 
 
-namespace cchell
+namespace cchell::input
 {
-    class input
+    class input_source
     {
     public:
-        [[nodiscard]]
-        static auto create() noexcept -> std::expected<input, std::string>;
+        input_source()          = default;
+        virtual ~input_source() = default;
+
+        input_source(input_source &)                     = delete;
+        auto operator=(input_source &) -> input_source & = delete;
 
 
-        input(input &)                     = delete;
-        auto operator=(input &) -> input & = delete;
+        /**
+         * reads a chunk of @param text from an input source
+         *
+         * return:
+         *    - 0     on success
+         *    - errno on error
+         *    - EOF   on EOF or EOT
+         */
+        virtual auto read(std::string &text) noexcept -> int = 0;
+    };
 
-        input(input &&other) noexcept;
-        auto operator=(input &&other) noexcept -> input &;
+
+    class stream_input : public input_source
+    {
+    };
 
 
-        /* returns 0 on success, `errno` on error, and EOF (-1) on EOF. */
-        auto read(std::string &text) noexcept -> int;
+    class interactive_input : public input_source
+    {
+    public:
+        interactive_input();
+
+        auto read(std::string &text) noexcept -> int override;
+
+        [[nodiscard]] auto is_sigint_triggered() const noexcept -> bool;
 
     private:
-        termios       m_old_term;
-        static input *m_instance;
-
-        volatile std::atomic_bool m_sigint_triggered;
-
-
-        input();
+        termios                   m_old_term;
+        static interactive_input *m_instance;
+        std::atomic_bool          m_sigint_triggered;
 
 
-        auto read_stdin(std::string &text) noexcept -> int;
+        void set_sigint_flag(bool value);
 
 
         static void install_sigint_action();

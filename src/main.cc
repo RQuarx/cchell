@@ -126,13 +126,13 @@ namespace
     auto
     run_repl() -> int
     {
-        auto        input { cchell::input::create() };
-        std::string text;
+        cchell::input::interactive_input input;
+        std::string                      text;
 
         while (true)
         {
             std::print(std::cerr, "$ ");
-            int res { input->read(text) };
+            int res { input.read(text) };
 
             if (res == EOF)
             {

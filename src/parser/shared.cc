@@ -19,7 +19,8 @@ namespace
     constexpr auto
     is_identifier_start(char c, bool is_option = true) -> bool
     {
-        return std::isalpha(c) != 0 || c == '_' || (is_option && c == '-');
+        return (is_option && std::isalnum(c) != 0) || std::isalpha(c) != 0
+            || c == '_' || (is_option && c == '-');
     }
 
 
