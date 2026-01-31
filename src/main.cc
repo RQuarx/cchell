@@ -126,6 +126,8 @@ namespace
     auto
     run_repl() -> int
     {
+        using namespace cchell::diagnostics;
+
         cchell::input::interactive_input input;
         std::string                      text;
 
@@ -148,7 +150,6 @@ namespace
 
             if (res > 0)
             {
-                using namespace cchell::diagnostics;
                 std::cerr << diagnostic_builder { severity::error }
                                  .domain("cchell::input::read")
                                  .message("{}", std::strerror(errno))

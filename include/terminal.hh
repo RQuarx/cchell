@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <optional>
+#include <utility>
 
 
 namespace cchell::terminal
@@ -71,19 +72,6 @@ namespace cchell::terminal
     };
 
 
-    struct decode_result
-    {
-        decode_status            status;
-        std::optional<key_event> event;
-
-        decode_result(decode_status            status,
-                      std::optional<key_event> event = std::nullopt)
-            : status { status }, event { event }
-        {
-        }
-    };
-
-
     [[nodiscard]]
-    auto decode(char ch) noexcept -> decode_result;
+    auto decode(char ch) noexcept -> std::pair<decode_status, std::optional<key_event>>;
 }

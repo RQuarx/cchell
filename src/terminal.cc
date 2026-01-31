@@ -87,7 +87,7 @@ namespace
 
 
     auto
-    decode_csi_char(char ch) noexcept -> decode_result
+    decode_csi_char(char ch) noexcept -> std::pair<decode_status, std::optional<key_event>>
     {
         using enum decode_status;
 
@@ -131,7 +131,7 @@ namespace
 
 
 auto
-cchell::terminal::decode(char ch) noexcept -> decode_result
+cchell::terminal::decode(char ch) noexcept -> std::pair<decode_status, std::optional<key_event>>
 {
     using enum decode_status;
 

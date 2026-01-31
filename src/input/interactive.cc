@@ -2,17 +2,41 @@
 #include <csignal>
 #include <cstring>
 #include <stdexcept>
+#include <utility>
 
 #include <unistd.h>
 
 #include "input.hh"
 #include "shared.hh"
+#include "terminal.hh"
 
 using cchell::input::interactive_input;
 
+
+namespace
+{
+    using namespace cchell;
+
+
+    auto
+    handle_input(char ch, bool &reading) -> terminal::decode_status
+    {
+        auto [status, event] { terminal::decode(ch) };
+
+        if (status != terminal::decode_status::value) return status;
+
+        if (event->code == terminal::key::enter)
+        {
+            reading = false;
+            return terminal::decode_status::none;
+        }
+
+        return terminal::decode_status::value;
+    }
+}
+
+
 interactive_input *interactive_input::m_instance { nullptr };
-
-
 interactive_input::interactive_input()
 {
     if (shared::tty_status.stdin())
@@ -28,6 +52,7 @@ interactive_input::interactive_input()
             throw std::runtime_error { std::strerror(errno) };
 
         install_sigint_action();
+        interactive_input::m_instance = this;
     }
     else
         interactive_input::m_instance = nullptr;
@@ -49,7 +74,7 @@ interactive_input::install_sigint_action()
 void
 interactive_input::sigint_handler(int sig)
 {
-    if (sig == SIGINT)
+    if (sig == SIGINT && interactive_input::m_instance != nullptr)
         interactive_input::m_instance->set_sigint_flag(true);
 }
 
@@ -77,6 +102,7 @@ interactive_input::read(std::string &text) noexcept -> int
     bool reading { true };
     bool escaped { false };
     char ch;
+    auto read_status { terminal::decode_status::none };
 
     while (reading)
     {
@@ -85,15 +111,27 @@ interactive_input::read(std::string &text) noexcept -> int
         /* 0x04 being "End of Transmission" in ASCII */
         if (ch == 0x04) return EOF;
 
-        if (!escaped && ch == '\\')
-            escaped = true;
-        else
+        /* decode status is pending, decoder owns the byte */
+        if (read_status == terminal::decode_status::pending)
         {
-            if (!escaped && ch == '\n') reading = false;
-            escaped = false;
+            read_status = handle_input(ch, reading);
+            continue;
         }
 
-        /* fputc and putc acts the same */
+        if (!escaped)
+        {
+            if (ch == '\\')
+                escaped = true;
+            else
+            {
+                read_status = handle_input(ch, reading);
+                if (read_status != terminal::decode_status::none) continue;
+            }
+
+        }
+        else
+            escaped = false;
+
         std::fputc(ch, stderr);
         text += ch;
     }
